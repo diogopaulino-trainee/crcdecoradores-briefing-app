@@ -3,31 +3,37 @@
 namespace App\Http\Controllers;
 
 use App\Models\Artigo;
+use App\Models\Iva;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class ArtigoController extends Controller
 {
     public function index()
     {
-        $artigos = Artigo::all();
-        return view('artigos.index', compact('artigos'));
+        $artigos = Artigo::with('iva')->get(); // se tiveres relação com tabela de IVA
+        return Inertia::render('Artigos/Index', [
+            'artigos' => $artigos,
+        ]);
     }
 
     public function create()
     {
-        return view('artigos.create');
+        return Inertia::render('Artigos/Create', [
+            'ivas' => Iva::all(), // para popular dropdown de IVA
+        ]);
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'referencia' => 'required|unique:artigos,referencia',
             'nome' => 'required',
             'preco' => 'required|numeric',
             'iva' => 'required|integer',
         ]);
 
-        $artigo = Artigo::create($request->all());
+        $artigo = Artigo::create($validated);
 
         activity()
             ->performedOn($artigo)
@@ -39,19 +45,22 @@ class ArtigoController extends Controller
 
     public function edit(Artigo $artigo)
     {
-        return view('artigos.edit', compact('artigo'));
+        return Inertia::render('Artigos/Edit', [
+            'artigo' => $artigo,
+            'ivas' => Iva::all(),
+        ]);
     }
 
     public function update(Request $request, Artigo $artigo)
     {
-        $request->validate([
+        $validated = $request->validate([
             'referencia' => 'required|unique:artigos,referencia,' . $artigo->id,
             'nome' => 'required',
             'preco' => 'required|numeric',
             'iva' => 'required|integer',
         ]);
 
-        $artigo->update($request->all());
+        $artigo->update($validated);
 
         activity()
             ->performedOn($artigo)

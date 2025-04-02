@@ -5,19 +5,26 @@ namespace App\Http\Controllers;
 use App\Models\Entidade;
 use App\Models\FaturaFornecedor;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class FaturaFornecedorController extends Controller
 {
     public function index()
     {
         $faturas = FaturaFornecedor::with(['fornecedor', 'encomendaFornecedor'])->get();
-        return view('faturas_fornecedores.index', compact('faturas'));
+
+        return Inertia::render('FaturasFornecedores/Index', [
+            'faturas' => $faturas,
+        ]);
     }
 
     public function create()
     {
         $fornecedores = Entidade::where('tipo', 'fornecedor')->get();
-        return view('faturas_fornecedores.create', compact('fornecedores'));
+
+        return Inertia::render('FaturasFornecedores/Create', [
+            'fornecedores' => $fornecedores,
+        ]);
     }
 
     public function store(Request $request)
@@ -37,13 +44,17 @@ class FaturaFornecedorController extends Controller
             ->causedBy(auth()->user())
             ->log('Criou uma fatura de fornecedor.');
 
-        return redirect()->route('faturas_fornecedores.index')->with('success', 'Fatura do fornecedor criada com sucesso.');
+        return redirect()->route('faturas-fornecedores.index')->with('success', 'Fatura do fornecedor criada com sucesso.');
     }
 
     public function edit(FaturaFornecedor $faturaFornecedor)
     {
         $fornecedores = Entidade::where('tipo', 'fornecedor')->get();
-        return view('faturas_fornecedores.edit', compact('faturaFornecedor', 'fornecedores'));
+
+        return Inertia::render('FaturasFornecedores/Edit', [
+            'fatura' => $faturaFornecedor,
+            'fornecedores' => $fornecedores,
+        ]);
     }
 
     public function update(Request $request, FaturaFornecedor $faturaFornecedor)
@@ -63,7 +74,7 @@ class FaturaFornecedorController extends Controller
             ->causedBy(auth()->user())
             ->log('Atualizou a fatura do fornecedor.');
 
-        return redirect()->route('faturas_fornecedores.index')->with('success', 'Fatura atualizada com sucesso.');
+        return redirect()->route('faturas-fornecedores.index')->with('success', 'Fatura atualizada com sucesso.');
     }
 
     public function destroy(FaturaFornecedor $faturaFornecedor)
@@ -75,6 +86,6 @@ class FaturaFornecedorController extends Controller
             ->causedBy(auth()->user())
             ->log('Eliminou a fatura do fornecedor.');
 
-        return redirect()->route('faturas_fornecedores.index')->with('success', 'Fatura eliminada com sucesso.');
+        return redirect()->route('faturas-fornecedores.index')->with('success', 'Fatura eliminada com sucesso.');
     }
 }

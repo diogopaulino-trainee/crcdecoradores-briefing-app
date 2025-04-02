@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('logotipo')->nullable();
             $table->string('nome');
             $table->string('morada')->nullable();
-            $table->string('codigo_postal', 8)->nullable();
+            $table->string('codigo_postal', 255)->nullable();
             $table->string('localidade')->nullable();
             $table->string('numero_contribuinte')->nullable();
             $table->timestamps();

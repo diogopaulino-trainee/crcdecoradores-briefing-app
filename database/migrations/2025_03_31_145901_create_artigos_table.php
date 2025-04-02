@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('nome');
             $table->text('descricao')->nullable();
             $table->decimal('preco', 10, 2);
-            $table->unsignedInteger('iva');
+            $table->foreignId('iva_id')->constrained('ivas')->onDelete('restrict');
             $table->string('foto')->nullable();
             $table->text('observacoes')->nullable();
             $table->enum('estado', ['ativo', 'inativo'])->default('ativo');

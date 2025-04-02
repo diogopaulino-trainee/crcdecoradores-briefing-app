@@ -19,7 +19,7 @@ class Entidade extends Model
         'morada',
         'codigo_postal',
         'localidade',
-        'pais',
+        'pais_id',
         'telefone',
         'telemovel',
         'website',
@@ -43,4 +43,9 @@ class Entidade extends Model
         'telemovel' => 'encrypted',
         'observacoes' => 'encrypted',
     ];
+
+    public function pais()
+    {
+        return $this->belongsTo(Pais::class);
+    }
 }

@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('morada')->nullable();
             $table->string('codigo_postal', 8)->nullable();
             $table->string('localidade')->nullable();
-            $table->string('pais')->nullable();
+            $table->foreignId('pais_id')->nullable()->constrained('paises')->onDelete('set null');
             $table->string('telefone')->nullable();
             $table->string('telemovel')->nullable();
             $table->string('website')->nullable();

@@ -7,6 +7,8 @@ use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -29,11 +31,35 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        $request->authenticate();
+        $request->ensureIsNotRateLimited();
+
+        $user = \App\Models\User::where('email', $request->email)->first();
+
+        if (! $user || ! Hash::check($request->password, $user->password)) {
+            RateLimiter::hit($request->throttleKey());
+
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'email' => __('As credenciais estão incorretas.'),
+            ]);
+        }
+
+        // Se o utilizador tiver 2FA ativo e confirmado, redireciona para o challenge
+        if ($user->two_factor_secret && $user->two_factor_confirmed_at) {
+            session(['login.id' => $user->getKey()]);
+
+            RateLimiter::clear($request->throttleKey());
+
+            return redirect()->route('two-factor.login');
+        }
+
+        // Login normal
+        Auth::login($user, $request->boolean('remember'));
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        RateLimiter::clear($request->throttleKey());
+
+        return redirect()->intended(config('fortify.home'));
     }
 
     /**

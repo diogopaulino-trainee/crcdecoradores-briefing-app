@@ -9,6 +9,8 @@ class Funcao extends Model
 {
     use HasFactory;
 
+    protected $table = 'funcoes';
+
     protected $fillable = [
         'nome',
         'descricao',

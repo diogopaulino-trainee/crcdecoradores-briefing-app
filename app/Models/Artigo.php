@@ -14,9 +14,14 @@ class Artigo extends Model
         'nome',
         'descricao',
         'preco',
-        'iva',
+        'iva_id',
         'foto',
         'observacoes',
         'estado',
     ];
+
+    public function iva()
+    {
+        return $this->belongsTo(Iva::class);
+    }
 }

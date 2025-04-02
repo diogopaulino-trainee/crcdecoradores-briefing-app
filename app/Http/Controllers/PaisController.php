@@ -4,27 +4,31 @@ namespace App\Http\Controllers;
 
 use App\Models\Pais;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class PaisController extends Controller
 {
     public function index()
     {
         $paises = Pais::all();
-        return view('paises.index', compact('paises'));
+
+        return Inertia::render('Paises/Index', [
+            'paises' => $paises,
+        ]);
     }
 
     public function create()
     {
-        return view('paises.create');
+        return Inertia::render('Paises/Create');
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nome' => 'required',
         ]);
 
-        $pais = Pais::create($request->all());
+        $pais = Pais::create($validated);
 
         activity()
             ->performedOn($pais)
@@ -36,16 +40,18 @@ class PaisController extends Controller
 
     public function edit(Pais $pais)
     {
-        return view('paises.edit', compact('pais'));
+        return Inertia::render('Paises/Edit', [
+            'pais' => $pais,
+        ]);
     }
 
     public function update(Request $request, Pais $pais)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nome' => 'required',
         ]);
 
-        $pais->update($request->all());
+        $pais->update($validated);
 
         activity()
             ->performedOn($pais)

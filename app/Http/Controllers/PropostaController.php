@@ -5,32 +5,38 @@ namespace App\Http\Controllers;
 use App\Models\Entidade;
 use App\Models\Proposta;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class PropostaController extends Controller
 {
     public function index()
     {
         $propostas = Proposta::with('cliente')->get();
-        return view('propostas.index', compact('propostas'));
+
+        return Inertia::render('Propostas/Index', [
+            'propostas' => $propostas,
+        ]);
     }
 
     public function create()
     {
-        // Apenas entidades do tipo 'cliente'
         $clientes = Entidade::where('tipo', 'cliente')->get();
-        return view('propostas.create', compact('clientes'));
+
+        return Inertia::render('Propostas/Create', [
+            'clientes' => $clientes,
+        ]);
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'numero' => 'required|unique:propostas,numero',
             'data_da_proposta' => 'required|date',
             'cliente_id' => 'required|exists:entidades,id',
             'validade' => 'required|date',
         ]);
 
-        $proposta = Proposta::create($request->all());
+        $proposta = Proposta::create($validated);
 
         activity()
             ->performedOn($proposta)
@@ -43,19 +49,23 @@ class PropostaController extends Controller
     public function edit(Proposta $proposta)
     {
         $clientes = Entidade::where('tipo', 'cliente')->get();
-        return view('propostas.edit', compact('proposta', 'clientes'));
+
+        return Inertia::render('Propostas/Edit', [
+            'proposta' => $proposta,
+            'clientes' => $clientes,
+        ]);
     }
 
     public function update(Request $request, Proposta $proposta)
     {
-        $request->validate([
+        $validated = $request->validate([
             'numero' => 'required|unique:propostas,numero,' . $proposta->id,
             'data_da_proposta' => 'required|date',
             'cliente_id' => 'required|exists:entidades,id',
             'validade' => 'required|date',
         ]);
 
-        $proposta->update($request->all());
+        $proposta->update($validated);
 
         activity()
             ->performedOn($proposta)

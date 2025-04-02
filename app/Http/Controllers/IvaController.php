@@ -4,18 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Models\Iva;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class IvaController extends Controller
 {
     public function index()
     {
         $ivas = Iva::all();
-        return view('ivas.index', compact('ivas'));
+
+        return Inertia::render('Ivas/Index', [
+            'ivas' => $ivas,
+        ]);
     }
 
     public function create()
     {
-        return view('ivas.create');
+        return Inertia::render('Ivas/Create');
     }
 
     public function store(Request $request)
@@ -37,7 +41,9 @@ class IvaController extends Controller
 
     public function edit(Iva $iva)
     {
-        return view('ivas.edit', compact('iva'));
+        return Inertia::render('Ivas/Edit', [
+            'iva' => $iva,
+        ]);
     }
 
     public function update(Request $request, Iva $iva)

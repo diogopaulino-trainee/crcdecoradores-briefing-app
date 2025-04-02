@@ -4,18 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Models\Funcao;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class FuncaoController extends Controller
 {
     public function index()
     {
         $funcoes = Funcao::all();
-        return view('funcoes.index', compact('funcoes'));
+
+        return Inertia::render('Funcoes/Index', [
+            'funcoes' => $funcoes,
+        ]);
     }
 
     public function create()
     {
-        return view('funcoes.create');
+        return Inertia::render('Funcoes/Create');
     }
 
     public function store(Request $request)
@@ -36,7 +40,9 @@ class FuncaoController extends Controller
 
     public function edit(Funcao $funcao)
     {
-        return view('funcoes.edit', compact('funcao'));
+        return Inertia::render('Funcoes/Edit', [
+            'funcao' => $funcao,
+        ]);
     }
 
     public function update(Request $request, Funcao $funcao)

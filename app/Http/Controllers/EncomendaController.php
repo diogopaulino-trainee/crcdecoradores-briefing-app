@@ -5,19 +5,51 @@ namespace App\Http\Controllers;
 use App\Models\Encomenda;
 use App\Models\Entidade;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class EncomendaController extends Controller
 {
     public function index()
     {
         $encomendas = Encomenda::with('cliente')->get();
-        return view('encomendas.index', compact('encomendas'));
+
+        return Inertia::render('Encomendas/Index', [
+            'encomendas' => $encomendas,
+            'filtro' => 'todas',
+        ]);
+    }
+
+    public function clientes()
+    {
+        $encomendas = Encomenda::with('cliente')
+            ->whereHas('cliente', fn ($q) => $q->where('tipo', 'cliente'))
+            ->get();
+
+        return Inertia::render('Encomendas/Index', [
+            'encomendas' => $encomendas,
+            'filtro' => 'clientes',
+        ]);
+    }
+
+    public function fornecedores()
+    {
+        $encomendas = Encomenda::with('cliente')
+            ->whereHas('cliente', fn ($q) => $q->where('tipo', 'fornecedor'))
+            ->get();
+
+        return Inertia::render('Encomendas/Index', [
+            'encomendas' => $encomendas,
+            'filtro' => 'fornecedores',
+        ]);
     }
 
     public function create()
     {
         $clientes = Entidade::where('tipo', 'cliente')->get();
-        return view('encomendas.create', compact('clientes'));
+
+        return Inertia::render('Encomendas/Create', [
+            'clientes' => $clientes,
+        ]);
     }
 
     public function store(Request $request)
@@ -41,7 +73,11 @@ class EncomendaController extends Controller
     public function edit(Encomenda $encomenda)
     {
         $clientes = Entidade::where('tipo', 'cliente')->get();
-        return view('encomendas.edit', compact('encomenda', 'clientes'));
+
+        return Inertia::render('Encomendas/Edit', [
+            'encomenda' => $encomenda,
+            'clientes' => $clientes,
+        ]);
     }
 
     public function update(Request $request, Encomenda $encomenda)

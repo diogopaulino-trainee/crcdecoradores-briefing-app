@@ -11,7 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
-use Laravel\Fortify\Fortify;
+use Laravel\Fortify\Contracts\TwoFactorChallengeViewResponse;
+use Inertia\Inertia;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -20,7 +21,7 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+
     }
 
     /**
@@ -28,19 +29,27 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Fortify::createUsersUsing(CreateNewUser::class);
-        Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);
-        Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
-        Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
+        \Laravel\Fortify\Fortify::createUsersUsing(CreateNewUser::class);
+        \Laravel\Fortify\Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);
+        \Laravel\Fortify\Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
+        \Laravel\Fortify\Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
 
         RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
-
+            $throttleKey = Str::transliterate(Str::lower($request->input('email')) . '|' . $request->ip());
             return Limit::perMinute(5)->by($throttleKey);
         });
 
         RateLimiter::for('two-factor', function (Request $request) {
             return Limit::perMinute(5)->by($request->session()->get('login.id'));
+        });
+
+        $this->app->singleton(TwoFactorChallengeViewResponse::class, function () {
+            return new class implements TwoFactorChallengeViewResponse {
+                public function toResponse($request)
+                {
+                    return Inertia::render('Auth/TwoFactorChallenge')->toResponse($request);
+                }
+            };
         });
     }
 }

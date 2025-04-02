@@ -5,30 +5,35 @@ namespace App\Http\Controllers;
 use App\Models\Contacto;
 use App\Models\Entidade;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class ContactoController extends Controller
 {
     public function index()
     {
         $contactos = Contacto::with('entidade')->get();
-        return view('contactos.index', compact('contactos'));
+
+        return Inertia::render('Contactos/Index', [
+            'contactos' => $contactos,
+        ]);
     }
 
     public function create()
     {
-        $entidades = Entidade::all();
-        return view('contactos.create', compact('entidades'));
+        return Inertia::render('Contactos/Create', [
+            'entidades' => Entidade::all(),
+        ]);
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'primeiro_nome' => 'required',
             'apelido' => 'required',
             'entidade_id' => 'required|exists:entidades,id',
         ]);
 
-        $contacto = Contacto::create($request->all());
+        $contacto = Contacto::create($validated);
 
         activity()
             ->performedOn($contacto)
@@ -40,19 +45,21 @@ class ContactoController extends Controller
 
     public function edit(Contacto $contacto)
     {
-        $entidades = Entidade::all();
-        return view('contactos.edit', compact('contacto', 'entidades'));
+        return Inertia::render('Contactos/Edit', [
+            'contacto' => $contacto,
+            'entidades' => Entidade::all(),
+        ]);
     }
 
     public function update(Request $request, Contacto $contacto)
     {
-        $request->validate([
+        $validated = $request->validate([
             'primeiro_nome' => 'required',
             'apelido' => 'required',
             'entidade_id' => 'required|exists:entidades,id',
         ]);
 
-        $contacto->update($request->all());
+        $contacto->update($validated);
 
         activity()
             ->performedOn($contacto)

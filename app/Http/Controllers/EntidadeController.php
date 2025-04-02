@@ -4,18 +4,40 @@ namespace App\Http\Controllers;
 
 use App\Models\Entidade;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class EntidadeController extends Controller
 {
     public function index()
     {
         $entidades = Entidade::all();
-        return view('entidades.index', compact('entidades'));
+        return Inertia::render('Entidades/Index', [
+            'entidades' => $entidades,
+            'filtro' => 'todos'
+        ]);
+    }
+
+    public function clientes()
+    {
+        $entidades = Entidade::where('tipo', 'cliente')->get();
+        return Inertia::render('Entidades/Index', [
+            'entidades' => $entidades,
+            'filtro' => 'cliente'
+        ]);
+    }
+
+    public function fornecedores()
+    {
+        $entidades = Entidade::where('tipo', 'fornecedor')->get();
+        return Inertia::render('Entidades/Index', [
+            'entidades' => $entidades,
+            'filtro' => 'fornecedor'
+        ]);
     }
 
     public function create()
     {
-        return view('entidades.create');
+        return Inertia::render('Entidades/Create');
     }
 
     public function store(Request $request)
@@ -38,7 +60,9 @@ class EntidadeController extends Controller
 
     public function edit(Entidade $entidade)
     {
-        return view('entidades.edit', compact('entidade'));
+        return Inertia::render('Entidades/Edit', [
+            'entidade' => $entidade,
+        ]);
     }
 
     public function update(Request $request, Entidade $entidade)

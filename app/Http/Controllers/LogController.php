@@ -4,19 +4,26 @@ namespace App\Http\Controllers;
 
 use Spatie\Activitylog\Models\Activity;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class LogController extends Controller
 {
     public function index()
     {
         $logs = Activity::latest()->get();
-        return view('logs.index', compact('logs'));
+
+        return Inertia::render('Logs/Index', [
+            'logs' => $logs,
+        ]);
     }
 
     public function show($id)
     {
         $log = Activity::findOrFail($id);
-        return view('logs.show', compact('log'));
+
+        return Inertia::render('Logs/Show', [
+            'log' => $log,
+        ]);
     }
 
     public function destroy($id)
@@ -30,6 +37,7 @@ class LogController extends Controller
     public function clearAll()
     {
         Activity::truncate();
+
         return redirect()->route('logs.index')->with('success', 'Todos os logs foram eliminados.');
     }
 }
