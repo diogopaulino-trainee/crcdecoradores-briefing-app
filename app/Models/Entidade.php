@@ -15,6 +15,7 @@ class Entidade extends Model
         'tipo',
         'numero',
         'nif',
+        'nif_hash',
         'nome',
         'morada',
         'codigo_postal',
@@ -28,6 +29,14 @@ class Entidade extends Model
         'observacoes',
         'estado',
     ];
+
+    protected static function booted()
+    {
+        static::saving(function ($entidade) {
+            // Gera o hash SHA-256 do NIF em texto plano
+            $entidade->nif_hash = hash('sha256', $entidade->nif);
+        });
+    }
 
     // Relação com os contactos
     public function contactos()

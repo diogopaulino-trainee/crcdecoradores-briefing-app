@@ -16,6 +16,7 @@ return new class extends Migration
             $table->enum('tipo', ['cliente', 'fornecedor']);
             $table->unsignedBigInteger('numero')->unique();
             $table->string('nif')->unique();
+            $table->string('nif_hash')->nullable()->index();
             $table->string('nome');
             $table->string('morada')->nullable();
             $table->string('codigo_postal', 8)->nullable();

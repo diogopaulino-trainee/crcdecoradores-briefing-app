@@ -93,7 +93,7 @@ onMounted(() => {
 <template>
     <section>
         <header>
-            <h2 class="text-lg font-medium text-gray-900">Autenticação 2FA</h2>
+            <h2 class="text-lg font-medium text-[#CAAC5F]">Autenticação 2FA</h2>
             <p class="mt-1 text-sm text-gray-600">Ativa a autenticação de dois fatores para aumentar a segurança da tua conta.</p>
         </header>
 
@@ -104,14 +104,21 @@ onMounted(() => {
             <!-- Formulário de confirmação -->
             <form v-if="confirming && !isConfirmed" @submit.prevent="confirmTwoFactorAuthentication" class="space-y-3">
                 <InputLabel for="code" value="Código de verificação" />
-                <TextInput id="code" v-model="confirmForm.code" required autofocus autocomplete="one-time-code" />
+
+                <div class="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+                    <TextInput id="code" v-model="confirmForm.code" required autofocus autocomplete="one-time-code" class="sm:max-w-xs" />
+
+                    <PrimaryButton :disabled="confirmForm.processing" class="mt-2 bg-[#CAAC5F] text-white hover:bg-[#bca248] sm:mt-0">
+                        Confirmar 2FA
+                    </PrimaryButton>
+                </div>
+
                 <InputError :message="confirmForm.errors.code" class="mt-1" />
-                <PrimaryButton :disabled="confirmForm.processing"> Confirmar 2FA </PrimaryButton>
             </form>
 
             <!-- Códigos de recuperação -->
             <div v-if="recoveryCodes.length">
-                <h3 class="text-sm font-medium text-gray-900">Códigos de recuperação</h3>
+                <h3 class="text-sm font-medium text-[#CAAC5F]">Códigos de recuperação</h3>
                 <ul class="mt-2 space-y-1 text-sm text-gray-700">
                     <li v-for="code in recoveryCodes" :key="code">{{ code }}</li>
                 </ul>
@@ -119,11 +126,26 @@ onMounted(() => {
 
             <!-- Botões -->
             <div class="flex flex-wrap items-center gap-4">
-                <PrimaryButton v-if="!isConfirmed" @click="enableTwoFactorAuthentication" :disabled="enabling"> Ativar 2FA </PrimaryButton>
+                <PrimaryButton
+                    v-if="!isConfirmed"
+                    @click="enableTwoFactorAuthentication"
+                    :disabled="enabling"
+                    class="bg-[#CAAC5F] text-white hover:bg-[#bca248]"
+                >
+                    Ativar 2FA
+                </PrimaryButton>
 
-                <PrimaryButton v-if="isConfirmed" @click="disableTwoFactorAuthentication"> Desativar 2FA </PrimaryButton>
+                <PrimaryButton v-if="isConfirmed" @click="disableTwoFactorAuthentication" class="bg-[#CAAC5F] text-white hover:bg-[#bca248]">
+                    Desativar 2FA
+                </PrimaryButton>
 
-                <PrimaryButton v-if="recoveryCodes.length && isConfirmed" @click="regenerateRecoveryCodes"> Regenerar Códigos </PrimaryButton>
+                <PrimaryButton
+                    v-if="recoveryCodes.length && isConfirmed"
+                    @click="regenerateRecoveryCodes"
+                    class="bg-[#CAAC5F] text-white hover:bg-[#bca248]"
+                >
+                    Regenerar Códigos
+                </PrimaryButton>
             </div>
         </div>
     </section>

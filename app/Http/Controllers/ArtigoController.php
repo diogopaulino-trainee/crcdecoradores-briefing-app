@@ -11,7 +11,7 @@ class ArtigoController extends Controller
 {
     public function index()
     {
-        $artigos = Artigo::with('iva')->get(); // se tiveres relação com tabela de IVA
+        $artigos = Artigo::with('iva')->get();
         return Inertia::render('Artigos/Index', [
             'artigos' => $artigos,
         ]);
@@ -20,7 +20,7 @@ class ArtigoController extends Controller
     public function create()
     {
         return Inertia::render('Artigos/Create', [
-            'ivas' => Iva::all(), // para popular dropdown de IVA
+            'ivas' => Iva::all(),
         ]);
     }
 

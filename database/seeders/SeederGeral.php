@@ -26,6 +26,14 @@ class SeederGeral extends Seeder
         // Países
         $portugal = Pais::create(['nome' => 'Portugal', 'codigo' => 'PT']);
         $espanha = Pais::create(['nome' => 'Espanha', 'codigo' => 'ES']);
+        $frança = Pais::create(['nome' => 'França', 'codigo' => 'FR']);
+        $alemanha = Pais::create(['nome' => 'Alemanha', 'codigo' => 'DE']);
+        $italia = Pais::create(['nome' => 'Itália', 'codigo' => 'IT']);
+        $belgium = Pais::create(['nome' => 'Bélgica', 'codigo' => 'BE']);
+        $holanda = Pais::create(['nome' => 'Holanda', 'codigo' => 'NL']);
+        $austria = Pais::create(['nome' => 'Áustria', 'codigo' => 'AT']);
+        $grecia = Pais::create(['nome' => 'Grécia', 'codigo' => 'GR']);
+        
 
         // Funções
         Funcao::insert([
@@ -61,56 +69,85 @@ class SeederGeral extends Seeder
         ]);
 
         // Entidades
-        $cliente = Entidade::create([
-            'tipo' => 'cliente',
-            'numero' => 1,
-            'nif' => '123456789',
-            'nome' => 'Cliente Exemplo',
-            'morada' => 'Rua do Cliente',
-            'codigo_postal' => '4000-001',
-            'localidade' => 'Porto',
-            'pais_id' => $portugal->id,
-            'telefone' => '222111333',
-            'telemovel' => '912345678',
-            'website' => 'https://cliente.com',
-            'email' => 'cliente@exemplo.com',
-            'consentimento_rgpd' => 'sim',
-            'observacoes' => 'Cliente habitual',
-            'estado' => 'ativo',
-        ]);
+        $cliente = null;
+        foreach (range(1, 20) as $i) {
+            $nif = 'PT' . str_pad($i, 9, '1', STR_PAD_LEFT);
+            $cliente = Entidade::create([
+                'tipo' => 'cliente',
+                'numero' => $i,
+                'nif' => $nif,
+                'nif_hash' => hash('sha256', $nif),
+                'nome' => "Cliente Exemplo $i",
+                'morada' => "Rua do Cliente $i",
+                'codigo_postal' => '4000-001',
+                'localidade' => 'Porto',
+                'pais_id' => $portugal->id,
+                'telefone' => '222111333',
+                'telemovel' => '912345678',
+                'website' => "https://cliente$i.com",
+                'email' => "cliente$i@exemplo.com",
+                'consentimento_rgpd' => $i % 2 === 0 ? 'sim' : 'nao',
+                'observacoes' => 'Cliente habitual',
+                'estado' => $i % 2 === 0 ? 'ativo' : 'inativo',
+            ]);
 
-        $fornecedor = Entidade::create([
-            'tipo' => 'fornecedor',
-            'numero' => 2,
-            'nif' => '987654321',
-            'nome' => 'Fornecedor Exemplo',
-            'morada' => 'Rua do Fornecedor',
-            'codigo_postal' => '5000-002',
-            'localidade' => 'Braga',
-            'pais_id' => $espanha->id,
-            'telefone' => '223334455',
-            'telemovel' => '913456789',
-            'website' => 'https://fornecedor.com',
-            'email' => 'fornecedor@exemplo.com',
-            'consentimento_rgpd' => 'nao',
-            'observacoes' => 'Fornecedor externo',
-            'estado' => 'ativo',
-        ]);
+            // Criar 2 contactos por cliente
+            for ($j = 1; $j <= 2; $j++) {
+                Contacto::create([
+                    'numero' => ($i - 1) * 2 + $j,
+                    'entidade_id' => $cliente->id,
+                    'primeiro_nome' => "Contacto$j",
+                    'apelido' => "Cliente$i",
+                    'funcao' => 'Gestor',
+                    'telefone' => '222111999',
+                    'telemovel' => '919999888',
+                    'email' => "contacto$j.cliente$i@exemplo.com",
+                    'consentimento_rgpd' => $j % 2 === 0 ? 'nao' : 'sim',
+                    'observacoes' => 'Pessoa de contacto',
+                    'estado' => 'ativo',
+                ]);
+            }
+        }
+        
+        $fornecedor = null;
+        foreach (range(1, 20) as $i) {
+            $nif = 'ES' . str_pad($i + 100, 9, '9', STR_PAD_LEFT);
+            $fornecedor = Entidade::create([
+                'tipo' => 'fornecedor',
+                'numero' => $i + 100,
+                'nif' => $nif,
+                'nif_hash' => hash('sha256', $nif),
+                'nome' => "Fornecedor Exemplo $i",
+                'morada' => "Rua do Fornecedor $i",
+                'codigo_postal' => '5000-002',
+                'localidade' => 'Braga',
+                'pais_id' => $espanha->id,
+                'telefone' => '223334455',
+                'telemovel' => '913456789',
+                'website' => "https://fornecedor$i.com",
+                'email' => "fornecedor$i@exemplo.com",
+                'consentimento_rgpd' => $i % 2 === 0 ? 'nao' : 'sim',
+                'observacoes' => 'Fornecedor externo',
+                'estado' => $i % 3 === 0 ? 'inativo' : 'ativo',
+            ]);
 
-        // Contactos
-        Contacto::create([
-            'numero' => 1,
-            'entidade_id' => $cliente->id,
-            'primeiro_nome' => 'Ana',
-            'apelido' => 'Silva',
-            'funcao' => 'Gestor',
-            'telefone' => '222111999',
-            'telemovel' => '919999888',
-            'email' => 'ana.silva@cliente.com',
-            'consentimento_rgpd' => 'sim',
-            'observacoes' => 'Pessoa de contacto principal',
-            'estado' => 'ativo',
-        ]);
+            // Criar 2 contactos por fornecedor
+            for ($j = 1; $j <= 2; $j++) {
+                Contacto::create([
+                    'numero' => 40 + ($i - 1) * 2 + $j,
+                    'entidade_id' => $fornecedor->id,
+                    'primeiro_nome' => "Contacto$j",
+                    'apelido' => "Fornecedor$i",
+                    'funcao' => 'Responsável',
+                    'telefone' => '223334455',
+                    'telemovel' => '913456789',
+                    'email' => "contacto$j.fornecedor$i@exemplo.com",
+                    'consentimento_rgpd' => $j % 2 === 0 ? 'sim' : 'nao',
+                    'observacoes' => 'Pessoa de contacto',
+                    'estado' => 'ativo',
+                ]);
+            }
+        }
 
         $iva23 = Iva::where('percentagem', 23)->first();
 

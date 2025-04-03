@@ -1,0 +1,21 @@
+warning: in the working copy of 'resources/js/Pages/Profile/Partials/TwoFactorAuthenticationForm.vue', CRLF will be replaced by LF the next time Git touches it
+.prettierignore
+app/Http/Controllers/ContactoController.php
+app/Http/Controllers/EntidadeController.php
+app/Models/Entidade.php
+composer.json
+composer.lock
+config/app.php
+database/migrations/2025_03_31_143816_create_entidades_table.php
+database/seeders/SeederGeral.php
+package-lock.json
+package.json
+resources/css/app.css
+resources/js/Layouts/AppLayout.vue
+resources/js/Pages/Profile/Edit.vue
+resources/js/Pages/Profile/Partials/DeleteUserForm.vue
+resources/js/Pages/Profile/Partials/TwoFactorAuthenticationForm.vue
+resources/js/Pages/Profile/Partials/UpdatePasswordForm.vue
+resources/js/Pages/Profile/Partials/UpdateProfileInformationForm.vue
+resources/js/app.js
+resources/js/registry/new-york-v4/ui/form/FormMessage.vue
