@@ -1,6 +1,6 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { ref, h, computed, watch } from 'vue';
+import { ref, computed, h } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import { Button } from '@/registry/new-york-v4/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/registry/new-york-v4/ui/dropdown-menu';
@@ -8,19 +8,16 @@ import DataTable from '@/Components/ui/data-table/DataTable.vue';
 import { Settings, ArrowUp, ArrowDown } from 'lucide-vue-next';
 
 const props = defineProps({
-    entidades: Object,
-    filtro: String,
-    filtros: Object,
-    paises: Array,
+    propostas: Object,
+    filtros: {
+        type: Object,
+        default: () => ({}),
+    },
 });
 
 const filtrosLocais = ref({
-    nome: props.filtros.nome || '',
-    nif: props.filtros.nif || '',
-    email: props.filtros.email || '',
+    termo: props.filtros.termo || '',
     estado: props.filtros.estado || '',
-    consentimento_rgpd: props.filtros.consentimento_rgpd || '',
-    pais_id: props.filtros.pais_id || '',
 });
 
 const debounceTimer = ref(null);
@@ -37,47 +34,36 @@ const aplicarFiltros = () => {
 
 const limparFiltros = () => {
     filtrosLocais.value = {
-        nome: '',
-        nif: '',
-        email: '',
+        termo: '',
         estado: '',
-        consentimento_rgpd: '',
-        pais_id: '',
     };
     aplicarFiltros();
 };
 
 const showModal = ref(false);
-const entidadeAEliminar = ref(null);
+const propostaAEliminar = ref(null);
 const rotatingId = ref(null);
 
-const nova = () => router.get(route('entidades.create'), { tipo: props.filtro });
-const editar = (id) => router.get(route('entidades.edit', id));
+const nova = () => router.get(route('propostas.create'));
+const ver = (id) => router.get(route('propostas.show', id));
+const editar = (id) => router.get(route('propostas.edit', id));
 const confirmarEliminar = (id) => {
-    const entidade = props.entidades.data.find((e) => e.id === id);
-    if (entidade) {
-        entidadeAEliminar.value = entidade;
+    const proposta = props.propostas.data.find((p) => p.id === id);
+    if (proposta) {
+        propostaAEliminar.value = proposta;
         showModal.value = true;
     }
 };
 const eliminar = () => {
-    if (entidadeAEliminar.value) {
-        router.delete(route('entidades.destroy', entidadeAEliminar.value.id), {
-            onSuccess: () => {
-                router.get(
-                    props.filtro === 'cliente'
-                        ? route('clientes.index')
-                        : props.filtro === 'fornecedor'
-                          ? route('fornecedores.index')
-                          : route('entidades.index'),
-                );
-            },
+    if (propostaAEliminar.value) {
+        router.delete(route('propostas.destroy', propostaAEliminar.value.id), {
+            onSuccess: () => router.get(route('propostas.index')),
         });
     }
 };
 
-const currentSort = computed(() => props.filtros.sort || 'nome');
-const currentDirection = computed(() => props.filtros.direction || 'asc');
+const currentSort = computed(() => props.filtros?.sort || 'data_da_proposta');
+const currentDirection = computed(() => props.filtros?.direction || 'desc');
 
 const sortBy = (column) => {
     const isAsc = currentSort.value === column && currentDirection.value === 'asc';
@@ -97,30 +83,52 @@ const sortBy = (column) => {
 
 const columns = [
     {
-        accessorKey: 'nif',
+        accessorKey: 'data_da_proposta',
         header: () =>
-            h('div', { class: 'flex items-center gap-1 cursor-pointer', onClick: () => sortBy('nif') }, [
-                'NIF',
-                currentSort.value === 'nif' ? h(currentDirection.value === 'asc' ? ArrowUp : ArrowDown, { class: 'w-4 h-4' }) : null,
+            h('div', { class: 'flex items-center gap-1 cursor-pointer', onClick: () => sortBy('data_da_proposta') }, [
+                'Data',
+                currentSort.value === 'data_da_proposta' ? h(currentDirection.value === 'asc' ? ArrowUp : ArrowDown, { class: 'w-4 h-4' }) : null,
             ]),
+        cell: ({ row }) => h('span', new Date(row?.data_da_proposta).toLocaleDateString()),
     },
     {
-        accessorKey: 'nome',
+        accessorKey: 'numero',
         header: () =>
-            h('div', { class: 'flex items-center gap-1 cursor-pointer', onClick: () => sortBy('nome') }, [
-                'Nome',
-                currentSort.value === 'nome' ? h(currentDirection.value === 'asc' ? ArrowUp : ArrowDown, { class: 'w-4 h-4' }) : null,
+            h('div', { class: 'flex items-center gap-1 cursor-pointer', onClick: () => sortBy('numero') }, [
+                'Número',
+                currentSort.value === 'numero' ? h(currentDirection.value === 'asc' ? ArrowUp : ArrowDown, { class: 'w-4 h-4' }) : null,
             ]),
+        cell: ({ row }) => h('span', row?.numero || '—'),
     },
-    { accessorKey: 'telefone', header: 'Telefone' },
-    { accessorKey: 'telemovel', header: 'Telemóvel' },
-    { accessorKey: 'website', header: 'Website' },
-    { accessorKey: 'email', header: 'Email' },
+    {
+        accessorKey: 'validade',
+        header: 'Validade',
+        cell: ({ row }) => h('span', new Date(row?.validade).toLocaleDateString()),
+    },
+    {
+        accessorFn: (row) => row.cliente?.nome,
+        header: () =>
+            h('div', { class: 'flex items-center gap-1 cursor-pointer', onClick: () => sortBy('cliente_id') }, [
+                'Cliente',
+                currentSort.value === 'cliente_id' ? h(currentDirection.value === 'asc' ? ArrowUp : ArrowDown, { class: 'w-4 h-4' }) : null,
+            ]),
+        cell: ({ row }) => h('span', row?.cliente?.nome || '—'),
+    },
+    {
+        accessorKey: 'valor_total',
+        header: 'Valor Total',
+        cell: ({ row }) => h('span', `€ ${parseFloat(row?.valor_total || 0).toFixed(2)}`),
+    },
+    {
+        accessorKey: 'estado',
+        header: 'Estado',
+        cell: ({ row }) => h('span', row?.estado || '—'),
+    },
     {
         id: 'acoes',
         header: 'Ações',
         cell: ({ row }) => {
-            const id = row?.original?.id ?? row?.id;
+            const id = row?.id;
             return h(DropdownMenu, null, {
                 default: () => [
                     h(DropdownMenuTrigger, { asChild: true }, () =>
@@ -146,12 +154,22 @@ const columns = [
                         ),
                     ),
                     h(DropdownMenuContent, { align: 'end' }, () => [
-                        h(DropdownMenuItem, { onClick: () => router.get(route('entidades.show', id)), class: 'cursor-pointer' }, () => 'Ver'),
+                        h(DropdownMenuItem, { onClick: () => ver(id), class: 'cursor-pointer' }, () => 'Ver'),
                         h(DropdownMenuItem, { onClick: () => editar(id), class: 'cursor-pointer' }, () => 'Editar'),
                         h(
                             DropdownMenuItem,
                             { onClick: () => confirmarEliminar(id), class: 'cursor-pointer text-red-600 hover:text-red-700' },
                             () => 'Eliminar',
+                        ),
+                        h(
+                            DropdownMenuItem,
+                            {
+                                class: 'cursor-pointer text-[#CDAA62] hover:text-[#a17d3b]',
+                                onClick: () => {
+                                    window.open(route('propostas.download', id), '_blank');
+                                },
+                            },
+                            () => 'Download PDF',
                         ),
                     ]),
                 ],
@@ -162,53 +180,43 @@ const columns = [
 </script>
 
 <template>
-    <Head :title="`Entidades (${filtro}) - CRCDecoradores`" />
+    <Head title="Propostas - CRCDecoradores" />
 
     <AppLayout>
         <div class="mb-4 flex flex-col gap-4">
-            <h1 class="text-2xl font-bold">Entidades ({{ filtro }})</h1>
+            <h1 class="text-2xl font-bold">Propostas</h1>
 
-            <!-- Filtros Avançados -->
+            <!-- Filtros -->
             <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <input v-model="filtrosLocais.nome" @input="aplicarFiltros" placeholder="Nome" class="rounded border px-3 py-2 text-sm shadow-sm" />
                 <input
-                    v-model="filtrosLocais.nif"
+                    v-model="filtrosLocais.termo"
                     @input="aplicarFiltros"
-                    placeholder="NIF com prefixo (ex: PT123456789)"
-                    class="rounded border px-3 py-2 text-sm shadow-sm"
+                    placeholder="Pesquisar número ou cliente"
+                    class="col-span-3 rounded border px-3 py-2 text-sm shadow-sm"
                 />
-                <input v-model="filtrosLocais.email" @input="aplicarFiltros" placeholder="Email" class="rounded border px-3 py-2 text-sm shadow-sm" />
+
                 <select v-model="filtrosLocais.estado" @change="aplicarFiltros" class="rounded border px-3 py-2 text-sm shadow-sm">
                     <option value="">Todos os estados</option>
-                    <option value="Ativo">Ativo</option>
-                    <option value="Inativo">Inativo</option>
-                </select>
-                <select v-model="filtrosLocais.consentimento_rgpd" @change="aplicarFiltros" class="rounded border px-3 py-2 text-sm shadow-sm">
-                    <option value="">Todos os consentimentos RGPD</option>
-                    <option value="Sim">Sim</option>
-                    <option value="Não">Não</option>
-                </select>
-                <select v-model="filtrosLocais.pais_id" @change="aplicarFiltros" class="rounded border px-3 py-2 text-sm shadow-sm">
-                    <option value="">Todos os países</option>
-                    <option v-for="pais in paises" :key="pais.id" :value="pais.id">{{ pais.nome }}</option>
+                    <option value="Rascunho">Rascunho</option>
+                    <option value="Fechado">Fechado</option>
                 </select>
             </div>
 
-            <div class="flex flex-wrap items-center justify-between gap-2">
-                <div class="text-sm text-gray-600">{{ entidades.total }} resultado(s) encontrados</div>
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-600">{{ propostas.total }} resultado(s)</div>
                 <div class="flex gap-2">
-                    <Button @click="limparFiltros" variant="outline">Limpar tudo</Button>
-                    <Button @click="nova">Nova Entidade</Button>
+                    <Button variant="outline" @click="limparFiltros">Limpar tudo</Button>
+                    <Button @click="nova">Nova Proposta</Button>
                 </div>
             </div>
         </div>
 
-        <DataTable :columns="columns" :data="entidades.data" class="rounded border shadow" />
+        <DataTable :columns="columns" :data="propostas.data" class="rounded border shadow" />
 
         <!-- Paginação -->
         <div class="mt-4 flex justify-center">
             <ul class="flex gap-1">
-                <li v-for="link in entidades.links" :key="link.label">
+                <li v-for="link in propostas.links" :key="link.label">
                     <button
                         v-if="link.url"
                         @click="router.get(link.url)"
@@ -229,8 +237,8 @@ const columns = [
             <div class="rounded-lg bg-white p-6 shadow-xl">
                 <h2 class="mb-4 text-lg font-semibold">Confirmar Eliminação</h2>
                 <p class="mb-6">
-                    Tens a certeza que queres eliminar a entidade
-                    <strong class="text-[#CDAA62]">{{ entidadeAEliminar?.nome }}</strong
+                    Tens a certeza que queres eliminar a proposta
+                    <strong class="text-[#CDAA62]">{{ propostaAEliminar?.numero }}</strong
                     >?
                 </p>
                 <div class="flex justify-end gap-2">

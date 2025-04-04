@@ -22,7 +22,7 @@ return new class extends Migration
             // Campos para ficheiros anexos – podem ser armazenados como strings (caminhos)
             $table->string('documento')->nullable();
             $table->string('comprovativo_pagamento')->nullable();
-            $table->enum('estado', ['pendente', 'paga'])->default('pendente');
+            $table->enum('estado', ['Pendente', 'Paga'])->default('Pendente');
             $table->timestamps();
         });
     }

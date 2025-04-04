@@ -17,7 +17,7 @@ return new class extends Migration
             $table->date('data_da_ordem');
             $table->foreignId('entidade_id')->constrained('entidades')->onDelete('cascade');
             $table->text('descricao')->nullable();
-            $table->enum('estado', ['ativo', 'inativo'])->default('ativo');
+            $table->enum('estado', ['Ativo', 'Inativo'])->default('Ativo');
             $table->timestamps();
         });
     }

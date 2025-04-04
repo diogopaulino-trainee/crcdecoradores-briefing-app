@@ -203,13 +203,13 @@ const columns = [
                 </select>
                 <select v-model="filtrosLocais.estado" @change="aplicarFiltros" class="rounded border px-3 py-2 text-sm shadow-sm">
                     <option value="">Todos os estados</option>
-                    <option value="ativo">Ativo</option>
-                    <option value="inativo">Inativo</option>
+                    <option value="Ativo">Ativo</option>
+                    <option value="Inativo">Inativo</option>
                 </select>
                 <select v-model="filtrosLocais.consentimento_rgpd" @change="aplicarFiltros" class="rounded border px-3 py-2 text-sm shadow-sm">
                     <option value="">Todos os consentimentos RGPD</option>
-                    <option value="sim">Sim</option>
-                    <option value="nao">Não</option>
+                    <option value="Sim">Sim</option>
+                    <option value="Não">Não</option>
                 </select>
             </div>
 

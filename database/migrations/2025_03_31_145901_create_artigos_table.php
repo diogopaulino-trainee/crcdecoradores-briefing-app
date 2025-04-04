@@ -20,7 +20,7 @@ return new class extends Migration
             $table->foreignId('iva_id')->constrained('ivas')->onDelete('restrict');
             $table->string('foto')->nullable();
             $table->text('observacoes')->nullable();
-            $table->enum('estado', ['ativo', 'inativo'])->default('ativo');
+            $table->enum('estado', ['Ativo', 'Inativo'])->default('Ativo');
             $table->timestamps();
         });
     }

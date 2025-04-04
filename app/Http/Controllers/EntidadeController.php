@@ -110,7 +110,7 @@ class EntidadeController extends Controller
             'email' => ['required', 'email', 'unique:entidades,email'],
             'consentimento_rgpd' => ['required', 'in:sim,nao'],
             'observacoes' => ['nullable', 'string'],
-            'estado' => ['required', 'in:ativo,inativo'],
+            'estado' => ['required', 'in:Ativo,Inativo'],
         ]);
     
         // Verifica se o NIF já existe
@@ -198,7 +198,7 @@ class EntidadeController extends Controller
             'email' => ['required', 'email', 'unique:entidades,email,' . $entidade->id],
             'consentimento_rgpd' => ['required', 'in:sim,nao'],
             'observacoes' => ['nullable', 'string'],
-            'estado' => ['required', 'in:ativo,inativo'],
+            'estado' => ['required', 'in:Ativo,Inativo'],
         ]);
 
         $nifHash = hash('sha256', $request->nif);

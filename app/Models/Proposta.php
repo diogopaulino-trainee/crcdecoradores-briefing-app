@@ -25,8 +25,8 @@ class Proposta extends Model
         return $this->belongsTo(Entidade::class, 'cliente_id');
     }
 
-    // public function linhas()
-    // {
-    //     return $this->hasMany(LinhaProposta::class);
-    // }
+    public function linhas()
+    {
+        return $this->hasMany(LinhaProposta::class);
+    }
 }

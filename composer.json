@@ -10,7 +10,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "caouecs/laravel-lang": "~6.0",
+        "barryvdh/laravel-dompdf": "^3.1",
         "dragonbe/vies": "*",
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/fortify": "^1.25",

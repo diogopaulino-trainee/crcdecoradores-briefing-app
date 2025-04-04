@@ -87,7 +87,7 @@ class ContactoController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:contactos,email'],
             'consentimento_rgpd' => ['required', 'in:sim,nao'],
             'observacoes' => ['nullable', 'string'],
-            'estado' => ['required', 'in:ativo,inativo'],
+            'estado' => ['required', 'in:Ativo,Inativo'],
         ]);
 
         $ultimoNumero = Contacto::max('numero') ?? 0;
@@ -129,7 +129,7 @@ class ContactoController extends Controller
             ],
             'consentimento_rgpd' => ['required', 'in:sim,nao'],
             'observacoes' => ['nullable', 'string'],
-            'estado' => ['required', 'in:ativo,inativo'],
+            'estado' => ['required', 'in:Ativo,Inativo'],
         ]);
 
         $contacto->update($validated);

@@ -18,7 +18,7 @@ return new class extends Migration
             // Apenas entidades do tipo 'cliente'
             $table->foreignId('cliente_id')->constrained('entidades')->onDelete('cascade');
             $table->date('validade')->nullable();
-            $table->enum('estado', ['rascunho', 'fechado'])->default('rascunho');
+            $table->enum('estado', ['Rascunho', 'Fechado'])->default('Rascunho');
             $table->decimal('valor_total', 10, 2)->nullable();
             $table->timestamps();
         });

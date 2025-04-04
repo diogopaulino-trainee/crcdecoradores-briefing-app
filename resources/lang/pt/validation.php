@@ -31,6 +31,10 @@ return [
         'estado' => 'estado',
         'entidade_id' => 'entidade',
         'funcao' => 'função',
+        'linhas.*.artigo_id' => 'artigo',
+        'linhas.*.fornecedor_id' => 'fornecedor',
+        'linhas.*.preco_unitario' => 'preço de custo',
+        'linhas.*.quantidade' => 'quantidade',
     ],
     'custom' => [
         'email' => [
@@ -38,6 +42,12 @@ return [
         ],
         'nif' => [
             'unique' => 'Este NIF já está registado.',
+        ],
+        'referencia' => [
+            'unique' => 'Esta referência já está registada.',
+        ],
+        'foto' => [
+            'image' => 'A nova foto tem de ser uma imagem válida.',
         ],
     ],
     'codigo_postal' => [

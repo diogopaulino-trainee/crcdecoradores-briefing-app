@@ -140,8 +140,8 @@ const submit = () => {
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                <SelectItem value="sim">Sim</SelectItem>
-                                <SelectItem value="nao">Não</SelectItem>
+                                <SelectItem value="Sim">Sim</SelectItem>
+                                <SelectItem value="Não">Não</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage>{{ form.errors.consentimento_rgpd }}</FormMessage>
@@ -158,8 +158,8 @@ const submit = () => {
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                <SelectItem value="ativo">Ativo</SelectItem>
-                                <SelectItem value="inativo">Inativo</SelectItem>
+                                <SelectItem value="Ativo">Ativo</SelectItem>
+                                <SelectItem value="Inativo">Inativo</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage>{{ form.errors.estado }}</FormMessage>

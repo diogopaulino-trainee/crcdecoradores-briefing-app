@@ -3,6 +3,10 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { Card, CardContent, CardHeader, CardTitle } from '@/registry/new-york-v4/ui/card';
 import { Users, FileText, Package, ShieldCheck } from 'lucide-vue-next';
+
+const props = defineProps({
+    twoFactorEnabled: Boolean,
+});
 </script>
 
 <template>
@@ -43,7 +47,9 @@ import { Users, FileText, Package, ShieldCheck } from 'lucide-vue-next';
                         <ShieldCheck class="h-6 w-6 text-primary" />
                         <CardTitle class="text-sm font-medium text-gray-500">2FA Ativo</CardTitle>
                     </CardHeader>
-                    <CardContent class="text-2xl font-bold text-gray-800">Sim</CardContent>
+                    <CardContent class="text-2xl font-bold" :class="props.twoFactorEnabled ? 'text-green-600' : 'text-red-600'">
+                        {{ props.twoFactorEnabled ? 'Sim' : 'Não' }}
+                    </CardContent>
                 </Card>
             </div>
 

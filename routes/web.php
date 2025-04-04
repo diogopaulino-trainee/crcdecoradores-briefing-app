@@ -1,21 +1,24 @@
 <?php
 
+use App\Http\Controllers\ArtigoController;
+use App\Http\Controllers\ContactoController;
+use App\Http\Controllers\EmpresaController;
+use App\Http\Controllers\EncomendaController;
+use App\Http\Controllers\EntidadeController;
+use App\Http\Controllers\FaturaFornecedorController;
+use App\Http\Controllers\FicheiroSeguroController;
+use App\Http\Controllers\FuncaoController;
+use App\Http\Controllers\IvaController;
+use App\Http\Controllers\LogController;
+use App\Http\Controllers\OrdemTrabalhoController;
+use App\Http\Controllers\PaisController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PropostaController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\EntidadeController;
-use App\Http\Controllers\ContactoController;
-use App\Http\Controllers\PropostaController;
-use App\Http\Controllers\EncomendaController;
-use App\Http\Controllers\OrdemTrabalhoController;
-use App\Http\Controllers\FaturaFornecedorController;
-use App\Http\Controllers\EmpresaController;
-use App\Http\Controllers\ArtigoController;
-use App\Http\Controllers\IvaController;
-use App\Http\Controllers\FuncaoController;
-use App\Http\Controllers\PaisController;
-use App\Http\Controllers\LogController;
+
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -27,7 +30,9 @@ Route::get('/', function () {
 })->name('welcome');
 
 Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
+    return Inertia::render('Dashboard', [
+        'twoFactorEnabled' => Auth::user()->two_factor_confirmed_at !== null,
+    ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -41,6 +46,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('entidades', EntidadeController::class);
     Route::resource('contactos', ContactoController::class);
     Route::resource('propostas', PropostaController::class);
+    Route::get('/propostas/{proposta}/pdf', [PropostaController::class, 'download'])->name('propostas.download');
     Route::get('/encomendas/clientes', [EncomendaController::class, 'clientes'])->name('encomendas.clientes');
     Route::get('/encomendas/fornecedores', [EncomendaController::class, 'fornecedores'])->name('encomendas.fornecedores');
     Route::resource('encomendas', EncomendaController::class);
@@ -59,6 +65,10 @@ Route::middleware('auth')->group(function () {
     Route::resource('ivas', IvaController::class);
     Route::resource('funcoes', FuncaoController::class);
     Route::resource('paises', PaisController::class);
+
+    Route::get('/ficheiros/privado/{caminho}', [FicheiroSeguroController::class, 'ver'])
+        ->where('caminho', '.*')
+        ->name('ficheiro.privado');
 
     // Logs
     Route::get('logs', [LogController::class, 'index'])->name('logs.index');
