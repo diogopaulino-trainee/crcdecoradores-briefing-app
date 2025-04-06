@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->enum('tipo', ['cliente', 'fornecedor']);
             $table->unsignedBigInteger('numero')->unique();
-            $table->date('data_da_proposta');
+            $table->date('data_da_proposta')->nullable();
+            $table->date('validade')->nullable();
             $table->foreignId('cliente_id')->constrained('entidades')->onDelete('cascade');
             $table->enum('estado', ['Rascunho', 'Fechado'])->default('Rascunho');
             $table->decimal('valor_total', 10, 2)->nullable();

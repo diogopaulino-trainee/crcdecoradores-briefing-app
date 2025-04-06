@@ -47,9 +47,12 @@ Route::middleware('auth')->group(function () {
     Route::resource('contactos', ContactoController::class);
     Route::resource('propostas', PropostaController::class);
     Route::get('/propostas/{proposta}/pdf', [PropostaController::class, 'download'])->name('propostas.download');
+    Route::post('/propostas/{proposta}/converter', [PropostaController::class, 'converter'])->name('propostas.converter');
     Route::get('/encomendas/clientes', [EncomendaController::class, 'clientes'])->name('encomendas.clientes');
     Route::get('/encomendas/fornecedores', [EncomendaController::class, 'fornecedores'])->name('encomendas.fornecedores');
     Route::resource('encomendas', EncomendaController::class);
+    Route::post('/encomendas/{encomenda}/converter', [EncomendaController::class, 'converter'])->name('encomendas.converter');
+    Route::get('/encomendas/{encomenda}/pdf', [EncomendaController::class, 'download'])->name('encomendas.download');
     Route::resource('ordens-trabalho', OrdemTrabalhoController::class);
     Route::resource('faturas-fornecedores', FaturaFornecedorController::class)->names([
         'index' => 'faturas.index',

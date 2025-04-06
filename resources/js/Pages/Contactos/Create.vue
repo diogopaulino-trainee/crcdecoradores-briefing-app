@@ -13,11 +13,12 @@ const toast = useToast();
 
 const props = defineProps({
     entidades: Array,
+    proximoNumero: Number,
 });
 
 const form = useForm({
     entidade_id: '',
-    numero: '',
+    numero: props.proximoNumero,
     primeiro_nome: '',
     apelido: '',
     funcao: '',
@@ -50,7 +51,27 @@ const submit = () => {
         <div class="mx-auto max-w-3xl space-y-6 rounded bg-white p-8 shadow">
             <h2 class="text-2xl font-bold text-[#CDAA62]">Criar Novo Contacto</h2>
 
+            <FormField name="numero">
+                <FormItem>
+                    <FormLabel>Número</FormLabel>
+                    <FormControl>
+                        <Input v-model="form.numero" id="numero" readonly />
+                    </FormControl>
+                    <FormMessage>{{ form.errors.numero }}</FormMessage>
+                </FormItem>
+            </FormField>
+
             <FormWithProvide :form="form" @submit.prevent="submit" class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <FormField name="primeiro_nome">
+                    <FormItem>
+                        <FormLabel>Primeiro Nome</FormLabel>
+                        <FormControl>
+                            <Input v-model="form.primeiro_nome" id="primeiro_nome" />
+                        </FormControl>
+                        <FormMessage>{{ form.errors.primeiro_nome }}</FormMessage>
+                    </FormItem>
+                </FormField>
+
                 <FormField name="entidade_id" class="md:col-span-2">
                     <FormItem>
                         <FormLabel>Entidade</FormLabel>
@@ -67,16 +88,6 @@ const submit = () => {
                             </SelectContent>
                         </Select>
                         <FormMessage>{{ form.errors.entidade_id }}</FormMessage>
-                    </FormItem>
-                </FormField>
-
-                <FormField name="primeiro_nome">
-                    <FormItem>
-                        <FormLabel>Primeiro Nome</FormLabel>
-                        <FormControl>
-                            <Input v-model="form.primeiro_nome" id="primeiro_nome" />
-                        </FormControl>
-                        <FormMessage>{{ form.errors.primeiro_nome }}</FormMessage>
                     </FormItem>
                 </FormField>
 
@@ -120,16 +131,6 @@ const submit = () => {
                     </FormItem>
                 </FormField>
 
-                <FormField name="email">
-                    <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                            <Input v-model="form.email" id="email" />
-                        </FormControl>
-                        <FormMessage>{{ form.errors.email }}</FormMessage>
-                    </FormItem>
-                </FormField>
-
                 <FormField name="consentimento_rgpd">
                     <FormItem>
                         <FormLabel>Consentimento RGPD</FormLabel>
@@ -145,6 +146,16 @@ const submit = () => {
                             </SelectContent>
                         </Select>
                         <FormMessage>{{ form.errors.consentimento_rgpd }}</FormMessage>
+                    </FormItem>
+                </FormField>
+
+                <FormField name="email">
+                    <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                            <Input v-model="form.email" id="email" />
+                        </FormControl>
+                        <FormMessage>{{ form.errors.email }}</FormMessage>
                     </FormItem>
                 </FormField>
 

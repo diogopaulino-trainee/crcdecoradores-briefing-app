@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Artigo;
+use App\Models\Encomenda;
 use App\Models\Entidade;
 use App\Models\Proposta;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -13,19 +15,22 @@ class PropostaController extends Controller
 {
     public function index(Request $request)
     {
+        $sort = $request->input('sort', 'data_da_proposta');
+        $direction = $request->input('direction', 'desc');
+
         $propostas = Proposta::with('cliente')
             ->when($request->input('termo'), function ($query, $termo) {
                 $query->where('numero', 'like', "%$termo%")
                     ->orWhereHas('cliente', fn($q) => $q->where('nome', 'like', "%$termo%"));
             })
             ->when($request->input('estado'), fn($q, $estado) => $q->where('estado', $estado))
-            ->orderBy('data_da_proposta', 'desc')
+            ->orderBy($sort, $direction)
             ->paginate(10)
             ->withQueryString();
 
         return Inertia::render('Propostas/Index', [
             'propostas' => $propostas,
-            'filtros' => $request->only(['termo', 'estado']),
+            'filtros' => $request->only(['termo', 'estado', 'sort', 'direction']),
         ]);
     }
 
@@ -95,10 +100,14 @@ class PropostaController extends Controller
     public function edit(Proposta $proposta)
     {
         $clientes = Entidade::where('tipo', 'cliente')->get();
+        $fornecedores = Entidade::where('tipo', 'fornecedor')->get();
+        $artigos = Artigo::all();
 
         return Inertia::render('Propostas/Edit', [
-            'proposta' => $proposta->load('linhas.artigo.iva'),
+            'proposta' => $proposta->load('linhas:id,proposta_id,artigo_id,quantidade,preco_unitario,fornecedor_id'),
             'clientes' => $clientes,
+            'fornecedores' => $fornecedores,
+            'artigos' => $artigos,
         ]);
     }
 
@@ -114,18 +123,31 @@ class PropostaController extends Controller
         $proposta->update($validated);
 
         if ($request->has('linhas')) {
-            $proposta->linhas()->delete();
-
-            $total = 0;
+            $idsRecebidos = [];
+        
             foreach ($request->linhas as $linha) {
-                $proposta->linhas()->create([
+                $data = [
                     'artigo_id' => $linha['artigo_id'],
                     'quantidade' => $linha['quantidade'],
                     'preco_unitario' => $linha['preco_unitario'],
-                ]);
-
-                $total += $linha['quantidade'] * $linha['preco_unitario'];
+                    'fornecedor_id' => $linha['fornecedor_id'] ?? null,
+                ];
+        
+                if (isset($linha['id'])) {
+                    $linhaModel = $proposta->linhas()->find($linha['id']);
+                    if ($linhaModel) {
+                        $linhaModel->update($data);
+                        $idsRecebidos[] = $linha['id'];
+                    }
+                } else {
+                    $novaLinha = $proposta->linhas()->create($data);
+                    $idsRecebidos[] = $novaLinha->id;
+                }
             }
+        
+            $proposta->linhas()->whereNotIn('id', $idsRecebidos)->delete();
+        
+            $total = $proposta->linhas->sum(fn($l) => $l->quantidade * $l->preco_unitario);
             $proposta->update(['valor_total' => $total]);
         }
 
@@ -161,5 +183,46 @@ class PropostaController extends Controller
 
         $pdf = Pdf::loadView('pdfs.proposta', compact('proposta', 'totalComIva'));
         return $pdf->download("proposta_{$proposta->numero}.pdf");
+    }
+
+    public function converter(Proposta $proposta)
+    {
+        $proposta = Proposta::with('linhas.artigo.iva', 'linhas.fornecedor', 'cliente')->find($proposta->id);
+
+        $total = 0;
+
+        foreach ($proposta->linhas as $linha) {
+            $precoBase = $linha->quantidade * $linha->preco_unitario;
+            $percentagemIva = $linha->artigo->iva->percentagem ?? 0;
+            $total += $precoBase * (1 + $percentagemIva / 100);
+        }
+
+        $encomenda = Encomenda::create([
+            'tipo' => 'cliente',
+            'numero' => (Encomenda::max('numero') ?? 2000) + 1,
+            'data_da_proposta' => now(),
+            'validade' => now()->addDays(30),
+            'cliente_id' => $proposta->cliente_id,
+            'estado' => 'Rascunho',
+            'valor_total' => round($total, 2),
+        ]);
+
+        foreach ($proposta->linhas as $linha) {
+            $encomenda->linhas()->create([
+                'artigo_id' => $linha->artigo_id,
+                'quantidade' => $linha->quantidade,
+                'preco_unitario' => $linha->preco_unitario,
+                'fornecedor_id' => $linha->fornecedor_id,
+            ]);
+        }
+
+        $proposta->delete();
+
+        activity()
+            ->performedOn($proposta)
+            ->causedBy(auth()->user())
+            ->log('Proposta convertida em encomenda.');
+
+        return redirect()->route('encomendas.clientes')->with('success', 'Proposta convertida em encomenda.');
     }
 }

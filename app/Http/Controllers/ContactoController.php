@@ -70,8 +70,11 @@ class ContactoController extends Controller
 
     public function create()
     {
+        $proximoNumero = (Contacto::max('numero') ?? 0) + 1;
+
         return Inertia::render('Contactos/Create', [
             'entidades' => Entidade::all(),
+            'proximoNumero' => $proximoNumero,
         ]);
     }
 

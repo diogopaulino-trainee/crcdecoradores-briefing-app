@@ -4,21 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class LinhaProposta extends Model
+class LinhaEncomenda extends Model
 {
-    protected $table = 'linhas_propostas';
+    protected $table = 'linhas_encomendas';
 
     protected $fillable = [
-        'proposta_id',
+        'encomenda_id',
         'artigo_id',
         'fornecedor_id',
         'quantidade',
         'preco_unitario',
     ];
 
-    public function proposta()
+    public function encomenda()
     {
-        return $this->belongsTo(Proposta::class);
+        return $this->belongsTo(Encomenda::class);
     }
 
     public function artigo()

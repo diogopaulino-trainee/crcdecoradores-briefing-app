@@ -14,10 +14,12 @@ const toast = useToast();
 const props = defineProps({
     tipo: String,
     paises: Array,
+    proximoNumero: Number,
 });
 
 const form = useForm({
     tipo: props.tipo,
+    numero: props.proximoNumero,
     nif: '',
     nome: '',
     morada: '',
@@ -66,6 +68,16 @@ const voltarParaLista = () => {
     <AppLayout>
         <div class="mx-auto max-w-3xl space-y-6 rounded bg-white p-8 shadow">
             <h2 class="text-2xl font-bold text-[#CDAA62]">Criar Nova Entidade ({{ tipo }})</h2>
+
+            <FormField name="numero">
+                <FormItem>
+                    <FormLabel>Número</FormLabel>
+                    <FormControl>
+                        <Input v-model="form.numero" id="numero" readonly />
+                    </FormControl>
+                    <FormMessage>{{ form.errors.numero }}</FormMessage>
+                </FormItem>
+            </FormField>
 
             <FormWithProvide :form="form" @submit.prevent="submit" class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField name="nif">

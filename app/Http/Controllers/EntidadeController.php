@@ -88,10 +88,13 @@ class EntidadeController extends Controller
     public function create(Request $request)
     {
         $paises = Pais::all();
+        $ultimoNumero = Entidade::max('numero') ?? 0;
+        $proximoNumero = $ultimoNumero + 1;
 
         return Inertia::render('Entidades/Create', [
             'tipo' => $request->input('tipo', 'cliente'),
             'paises' => $paises,
+            'proximoNumero' => $proximoNumero,
         ]);
     }
 

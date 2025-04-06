@@ -1,91 +1,20 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { ref, computed, h } from 'vue';
+import { ref, h, computed } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import { Button } from '@/registry/new-york-v4/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/registry/new-york-v4/ui/dropdown-menu';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
-import { Settings, ArrowUp, ArrowDown } from 'lucide-vue-next';
+import { Settings, ArrowDown, ArrowUp } from 'lucide-vue-next';
 
 const props = defineProps({
-    propostas: Object,
+    encomendas: Object,
+    filtro: String,
     filtros: {
         type: Object,
         default: () => ({}),
     },
 });
-
-const filtrosLocais = ref({
-    termo: props.filtros.termo || '',
-    estado: props.filtros.estado || '',
-});
-
-const debounceTimer = ref(null);
-
-const aplicarFiltros = () => {
-    clearTimeout(debounceTimer.value);
-    debounceTimer.value = setTimeout(() => {
-        router.get(route(route().current()), filtrosLocais.value, {
-            preserveState: true,
-            replace: true,
-        });
-    }, 100);
-};
-
-const limparFiltros = () => {
-    filtrosLocais.value = {
-        termo: '',
-        estado: '',
-    };
-    aplicarFiltros();
-};
-
-const showModal = ref(false);
-const propostaAEliminar = ref(null);
-
-const showConverterModal = ref(false);
-const propostaAConverter = ref(null);
-
-const confirmarConversao = (id) => {
-    propostaAConverter.value = props.propostas.data.find((p) => p.id === id);
-    showConverterModal.value = true;
-};
-
-const converter = () => {
-    if (propostaAConverter.value) {
-        router.visit(route('propostas.converter', propostaAConverter.value.id), {
-            method: 'post',
-            preserveScroll: true,
-            preserveState: true,
-            onSuccess: () => {
-                showConverterModal.value = false;
-            },
-            onError: () => {
-                showConverterModal.value = false;
-            },
-        });
-    }
-};
-
-const rotatingId = ref(null);
-
-const nova = () => router.get(route('propostas.create'));
-const ver = (id) => router.get(route('propostas.show', id));
-const editar = (id) => router.get(route('propostas.edit', id));
-const confirmarEliminar = (id) => {
-    const proposta = props.propostas.data.find((p) => p.id === id);
-    if (proposta) {
-        propostaAEliminar.value = proposta;
-        showModal.value = true;
-    }
-};
-const eliminar = () => {
-    if (propostaAEliminar.value) {
-        router.delete(route('propostas.destroy', propostaAEliminar.value.id), {
-            onSuccess: () => router.get(route('propostas.index')),
-        });
-    }
-};
 
 const currentSort = computed(() => props.filtros?.sort || 'data_da_proposta');
 const currentDirection = computed(() => props.filtros?.direction || 'desc');
@@ -106,37 +35,114 @@ const sortBy = (column) => {
     );
 };
 
+const filtrosLocais = ref({
+    termo: props.filtros.termo || '',
+    estado: props.filtros.estado || '',
+});
+const debounceTimer = ref(null);
+const showModal = ref(false);
+const showConverterModal = ref(false);
+const encomendaAEliminar = ref(null);
+const encomendaAConverter = ref(null);
+const rotatingId = ref(null);
+
+const aplicarFiltros = () => {
+    clearTimeout(debounceTimer.value);
+    debounceTimer.value = setTimeout(() => {
+        router.get(route(route().current()), filtrosLocais.value, {
+            preserveState: true,
+            replace: true,
+        });
+    }, 200);
+};
+
+const limparFiltros = () => {
+    filtrosLocais.value = { termo: '', estado: '' };
+    aplicarFiltros();
+};
+
+// Redireciona conforme o filtro atual
+const irParaIndex = () => {
+    switch (props.filtro) {
+        case 'clientes':
+            router.get(route('encomendas.clientes'));
+            break;
+        case 'fornecedores':
+            router.get(route('encomendas.fornecedores'));
+            break;
+        default:
+            router.get(route('encomendas.index'));
+    }
+};
+
+const nova = () => router.get(route('encomendas.create', { tipo: props.filtro }));
+const ver = (id) => router.get(route('encomendas.show', id));
+const editar = (id) => router.get(route('encomendas.edit', id));
+
+const confirmarEliminar = (id) => {
+    encomendaAEliminar.value = props.encomendas.data.find((e) => e.id === id);
+    showModal.value = true;
+};
+
+const eliminar = () => {
+    if (encomendaAEliminar.value) {
+        router.delete(route('encomendas.destroy', encomendaAEliminar.value.id), {
+            onSuccess: () => irParaIndex(),
+        });
+    }
+};
+
+const confirmarConversao = (id) => {
+    encomendaAConverter.value = props.encomendas.data.find((e) => e.id === id);
+    showConverterModal.value = true;
+};
+
+const converter = () => {
+    if (encomendaAConverter.value) {
+        router.post(
+            route('encomendas.converter', encomendaAConverter.value.id),
+            {},
+            {
+                onSuccess: () => {
+                    showConverterModal.value = false;
+                    irParaIndex();
+                },
+            },
+        );
+    }
+};
+
+const tipoLabel = computed(() => {
+    if (props.filtro === 'clientes') return 'Clientes';
+    if (props.filtro === 'fornecedores') return 'Fornecedores';
+    return 'Todas';
+});
+
 const columns = [
     {
         accessorKey: 'data_da_proposta',
         header: () =>
             h('div', { class: 'flex items-center gap-1 cursor-pointer', onClick: () => sortBy('data_da_proposta') }, [
                 'Data',
-                currentSort.value === 'data_da_proposta' ? h(currentDirection.value === 'asc' ? ArrowUp : ArrowDown, { class: 'w-4 h-4' }) : null,
+                currentSort.value === 'data_da_proposta'
+                    ? h(currentDirection.value === 'asc' ? ArrowUp : ArrowDown, { class: 'w-4 h-4 text-[#CDAA62]' })
+                    : null,
             ]),
-        cell: ({ row }) => h('span', new Date(row?.data_da_proposta).toLocaleDateString()),
+        cell: ({ row }) => h('span', row?.data_da_proposta ? new Date(row.data_da_proposta).toLocaleDateString() : '—'),
     },
     {
         accessorKey: 'numero',
-        header: () =>
-            h('div', { class: 'flex items-center gap-1 cursor-pointer', onClick: () => sortBy('numero') }, [
-                'Número',
-                currentSort.value === 'numero' ? h(currentDirection.value === 'asc' ? ArrowUp : ArrowDown, { class: 'w-4 h-4' }) : null,
-            ]),
+        header: 'Número',
         cell: ({ row }) => h('span', row?.numero || '—'),
     },
     {
         accessorKey: 'validade',
         header: 'Validade',
-        cell: ({ row }) => h('span', new Date(row?.validade).toLocaleDateString()),
+        cell: ({ row }) => h('span', row?.validade ? new Date(row?.validade).toLocaleDateString() : '—'),
     },
     {
         accessorFn: (row) => row.cliente?.nome,
-        header: () =>
-            h('div', { class: 'flex items-center gap-1 cursor-pointer', onClick: () => sortBy('cliente_id') }, [
-                'Cliente',
-                currentSort.value === 'cliente_id' ? h(currentDirection.value === 'asc' ? ArrowUp : ArrowDown, { class: 'w-4 h-4' }) : null,
-            ]),
+        header: 'Cliente',
         cell: ({ row }) => h('span', row?.cliente?.nome || '—'),
     },
     {
@@ -144,7 +150,9 @@ const columns = [
         header: () =>
             h('div', { class: 'flex items-center gap-1 cursor-pointer', onClick: () => sortBy('valor_total') }, [
                 'Valor Total',
-                currentSort.value === 'valor_total' ? h(currentDirection.value === 'asc' ? ArrowUp : ArrowDown, { class: 'w-4 h-4' }) : null,
+                currentSort.value === 'valor_total'
+                    ? h(currentDirection.value === 'asc' ? ArrowUp : ArrowDown, { class: 'w-4 h-4 text-[#CDAA62]' })
+                    : null,
             ]),
         cell: ({ row }) => h('span', `€ ${parseFloat(row?.valor_total || 0).toFixed(2)}`),
     },
@@ -187,27 +195,30 @@ const columns = [
                         h(DropdownMenuItem, { onClick: () => editar(id), class: 'cursor-pointer' }, () => 'Editar'),
                         h(
                             DropdownMenuItem,
-                            { onClick: () => confirmarEliminar(id), class: 'cursor-pointer text-red-600 hover:text-red-700' },
+                            {
+                                onClick: () => confirmarEliminar(id),
+                                class: 'cursor-pointer text-red-600 hover:text-red-700',
+                            },
                             () => 'Eliminar',
                         ),
                         h(
                             DropdownMenuItem,
                             {
                                 class: 'cursor-pointer text-[#CDAA62] hover:text-[#a17d3b]',
-                                onClick: () => {
-                                    window.open(route('propostas.download', id), '_blank');
-                                },
+                                onClick: () => window.open(route('encomendas.download', id), '_blank'),
                             },
                             () => 'Download PDF',
                         ),
-                        h(
-                            DropdownMenuItem,
-                            {
-                                class: 'cursor-pointer text-[#CDAA62] hover:text-[#a17d3b]',
-                                onClick: () => confirmarConversao(id),
-                            },
-                            () => 'Converter para Encomenda',
-                        ),
+                        row?.estado === 'Fechado' &&
+                            props.filtro !== 'fornecedores' &&
+                            h(
+                                DropdownMenuItem,
+                                {
+                                    class: 'cursor-pointer text-[#CDAA62] hover:text-[#a17d3b]',
+                                    onClick: () => confirmarConversao(id),
+                                },
+                                () => 'Converter para Encomenda de Fornecedor',
+                            ),
                     ]),
                 ],
             });
@@ -217,11 +228,10 @@ const columns = [
 </script>
 
 <template>
-    <Head title="Propostas - CRCDecoradores" />
-
+    <Head :title="`Encomendas (${tipoLabel}) - CRCDecoradores`" />
     <AppLayout>
         <div class="mb-4 flex flex-col gap-4">
-            <h1 class="text-2xl font-bold">Propostas</h1>
+            <h1 class="text-2xl font-bold">Encomendas ({{ tipoLabel }})</h1>
 
             <!-- Filtros -->
             <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -231,7 +241,6 @@ const columns = [
                     placeholder="Pesquisar número ou cliente"
                     class="col-span-3 rounded border px-3 py-2 text-sm shadow-sm"
                 />
-
                 <select v-model="filtrosLocais.estado" @change="aplicarFiltros" class="rounded border px-3 py-2 text-sm shadow-sm">
                     <option value="">Todos os estados</option>
                     <option value="Rascunho">Rascunho</option>
@@ -240,59 +249,40 @@ const columns = [
             </div>
 
             <div class="flex items-center justify-between">
-                <div class="text-sm text-gray-600">{{ propostas.total }} resultado(s)</div>
+                <div class="text-sm text-gray-600">{{ encomendas.total }} resultado(s)</div>
                 <div class="flex gap-2">
                     <Button variant="outline" @click="limparFiltros">Limpar tudo</Button>
-                    <Button @click="nova">Nova Proposta</Button>
+                    <Button @click="nova">Nova Encomenda</Button>
                 </div>
             </div>
         </div>
 
-        <DataTable :columns="columns" :data="propostas.data" class="rounded border shadow" />
+        <DataTable :columns="columns" :data="encomendas.data" class="rounded border shadow" />
 
-        <!-- Paginação -->
-        <div class="mt-4 flex justify-center">
-            <ul class="flex gap-1">
-                <li v-for="link in propostas.links" :key="link.label">
-                    <button
-                        v-if="link.url"
-                        @click="router.get(link.url)"
-                        class="px-3 py-1 text-sm"
-                        :class="{
-                            'font-bold text-[#CDAA62] underline': link.active,
-                            'text-gray-500 hover:text-[#CDAA62]': !link.active,
-                        }"
-                        v-html="link.label"
-                    />
-                    <span v-else class="px-3 py-1 text-sm text-gray-400" v-html="link.label" />
-                </li>
-            </ul>
-        </div>
-
-        <!-- Modal de Confirmação -->
+        <!-- Modal Eliminar -->
         <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
             <div class="rounded-lg bg-white p-6 shadow-xl">
                 <h2 class="mb-4 text-lg font-semibold">Confirmar Eliminação</h2>
                 <p class="mb-6">
-                    Tens a certeza que queres eliminar a proposta
-                    <strong class="text-[#CDAA62]">{{ propostaAEliminar?.numero }}</strong
+                    Tens a certeza que queres eliminar a encomenda
+                    <strong class="text-[#CDAA62]">{{ encomendaAEliminar?.numero }}</strong
                     >?
                 </p>
                 <div class="flex justify-end gap-2">
                     <Button variant="outline" @click="showModal = false">Cancelar</Button>
-                    <Button variant="destructive" class="bg-[#CDAA62] text-white hover:bg-[#b38f52]" @click="eliminar"> Eliminar </Button>
+                    <Button variant="destructive" class="bg-[#CDAA62] text-white hover:bg-[#b38f52]" @click="eliminar">Eliminar</Button>
                 </div>
             </div>
         </div>
 
-        <!-- Modal de Conversão -->
+        <!-- Modal Converter -->
         <div v-if="showConverterModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
             <div class="rounded-lg bg-white p-6 shadow-xl">
-                <h2 class="mb-4 text-lg font-semibold">Converter Proposta</h2>
+                <h2 class="mb-4 text-lg font-semibold">Converter Encomenda</h2>
                 <p class="mb-6">
-                    Queres mesmo converter a proposta
-                    <strong class="text-[#CDAA62]">{{ propostaAConverter?.numero }}</strong>
-                    em Encomenda?
+                    Queres mesmo converter a encomenda
+                    <strong class="text-[#CDAA62]">{{ encomendaAConverter?.numero }}</strong>
+                    para Encomenda de Fornecedor?
                 </p>
                 <div class="flex justify-end gap-2">
                     <Button variant="outline" @click="showConverterModal = false">Cancelar</Button>

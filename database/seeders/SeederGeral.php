@@ -10,6 +10,7 @@ use App\Models\Entidade;
 use App\Models\FaturaFornecedor;
 use App\Models\Funcao;
 use App\Models\Iva;
+use App\Models\LinhaEncomenda;
 use App\Models\LinhaProposta;
 use App\Models\OrdemTrabalho;
 use App\Models\Pais;
@@ -78,6 +79,8 @@ class SeederGeral extends Seeder
 
         // Entidades
         $cliente = null;
+        $numeroContacto = 1;
+
         foreach (range(1, 20) as $i) {
             $nif = 'PT' . str_pad($i, 9, '1', STR_PAD_LEFT);
             $cliente = Entidade::create([
@@ -102,7 +105,7 @@ class SeederGeral extends Seeder
             // Criar 2 contactos por cliente
             for ($j = 1; $j <= 2; $j++) {
                 Contacto::create([
-                    'numero' => ($i - 1) * 2 + $j,
+                    'numero' => $numeroContacto++,
                     'entidade_id' => $cliente->id,
                     'primeiro_nome' => "Contacto$j",
                     'apelido' => "Cliente$i",
@@ -118,13 +121,16 @@ class SeederGeral extends Seeder
         }
         
         $fornecedor = null;
+        $ultimoNumero = Entidade::max('numero') ?? 0;
+
         foreach (range(1, 20) as $i) {
-            $nif = 'ES' . str_pad($i + 100, 9, '9', STR_PAD_LEFT);
+            $numero = $ultimoNumero + $i;
+
             $fornecedor = Entidade::create([
                 'tipo' => 'fornecedor',
-                'numero' => $i + 100,
-                'nif' => $nif,
-                'nif_hash' => hash('sha256', $nif),
+                'numero' => $numero,
+                'nif' => 'ES' . str_pad($i + 100, 9, '9', STR_PAD_LEFT),
+                'nif_hash' => hash('sha256', 'ES' . str_pad($i + 100, 9, '9', STR_PAD_LEFT)),
                 'nome' => "Fornecedor Exemplo $i",
                 'morada' => "Rua do Fornecedor $i",
                 'codigo_postal' => '5000-002',
@@ -142,7 +148,7 @@ class SeederGeral extends Seeder
             // Criar 2 contactos por fornecedor
             for ($j = 1; $j <= 2; $j++) {
                 Contacto::create([
-                    'numero' => 40 + ($i - 1) * 2 + $j,
+                    'numero' => $numeroContacto++,
                     'entidade_id' => $fornecedor->id,
                     'primeiro_nome' => "Contacto$j",
                     'apelido' => "Fornecedor$i",
@@ -202,6 +208,7 @@ class SeederGeral extends Seeder
                 LinhaProposta::create([
                     'proposta_id' => $proposta->id,
                     'artigo_id' => $artigo->id,
+                    'fornecedor_id' => $fornecedor->id,
                     'quantidade' => $quantidade,
                     'preco_unitario' => $precoUnitario,
                 ]);
@@ -217,16 +224,27 @@ class SeederGeral extends Seeder
             'tipo' => 'cliente',
             'numero' => 2001,
             'data_da_proposta' => $proposta->data_da_proposta,
+            'validade' => $proposta->validade,
             'cliente_id' => $cliente->id,
             'estado' => 'Fechado',
             'valor_total' => $proposta->valor_total,
         ]);
+        foreach ($proposta->linhas as $linha) {
+            LinhaEncomenda::create([
+                'encomenda_id' => $encomendaCliente->id,
+                'artigo_id' => $linha->artigo_id,
+                'fornecedor_id' => $linha->fornecedor_id,
+                'quantidade' => $linha->quantidade,
+                'preco_unitario' => $linha->preco_unitario,
+            ]);
+        }
 
         // Encomenda fornecedor
         $encomendaFornecedor = Encomenda::create([
             'tipo' => 'fornecedor',
             'numero' => 2002,
             'data_da_proposta' => now()->subDays(2),
+            'validade' => now()->addDays(30),
             'cliente_id' => $fornecedor->id,
             'estado' => 'Fechado',
             'valor_total' => 99.90,

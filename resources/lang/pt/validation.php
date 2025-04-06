@@ -49,6 +49,10 @@ return [
         'foto' => [
             'image' => 'A nova foto tem de ser uma imagem válida.',
         ],
+        'linhas' => [
+        'required' => 'Tens de adicionar pelo menos uma linha de artigo.',
+        'min' => 'Deves inserir pelo menos uma linha de artigo.',
+    ],
     ],
     'codigo_postal' => [
             'regex' => 'O código postal deve ter o formato 1234-567.',

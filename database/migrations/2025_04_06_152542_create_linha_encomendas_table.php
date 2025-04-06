@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('linhas_propostas', function (Blueprint $table) {
+        Schema::create('linhas_encomendas', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('proposta_id')->constrained()->onDelete('cascade');
-            $table->foreignId('artigo_id')->constrained()->onDelete('restrict');
-            $table->foreignId('fornecedor_id')->nullable()->constrained('entidades')->nullOnDelete();
+            $table->foreignId('encomenda_id')->constrained('encomendas')->onDelete('cascade');
+            $table->foreignId('artigo_id')->constrained('artigos')->onDelete('cascade');
+            $table->foreignId('fornecedor_id')->nullable()->constrained('entidades')->onDelete('set null');
             $table->decimal('quantidade', 10, 2);
             $table->decimal('preco_unitario', 10, 2);
             $table->timestamps();
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('linhas_propostas');
+        Schema::dropIfExists('linha_encomendas');
     }
 };

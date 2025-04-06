@@ -15,6 +15,7 @@ class Encomenda extends Model
         'tipo',
         'numero',
         'data_da_proposta',
+        'validade',
         'cliente_id',
         'estado',
         'valor_total',
@@ -23,5 +24,10 @@ class Encomenda extends Model
     public function cliente()
     {
         return $this->belongsTo(Entidade::class, 'cliente_id');
+    }
+
+    public function linhas()
+    {
+        return $this->hasMany(LinhaEncomenda::class, 'encomenda_id');
     }
 }
