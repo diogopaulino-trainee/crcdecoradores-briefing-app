@@ -22,6 +22,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'telemovel',
+        'estado',
+        'funcao_id',
     ];
 
     /**
@@ -48,5 +51,10 @@ class User extends Authenticatable
     public function funcao()
     {
         return $this->belongsTo(Funcao::class);
+    }
+
+    public function isActive(): bool
+    {
+        return $this->estado === 'Ativo';
     }
 }

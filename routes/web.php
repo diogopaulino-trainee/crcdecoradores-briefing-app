@@ -12,12 +12,16 @@ use App\Http\Controllers\IvaController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\OrdemTrabalhoController;
 use App\Http\Controllers\PaisController;
+use App\Http\Controllers\PermissaoController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PropostaController;
+use App\Http\Controllers\UtilizadorController;
 use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+
 
 
 Route::get('/', function () {
@@ -41,6 +45,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    Route::resource('utilizadores', UtilizadorController::class);
+    Route::resource('permissoes', PermissaoController::class);
+
     Route::get('/clientes', [EntidadeController::class, 'clientes'])->name('clientes.index');
     Route::get('/fornecedores', [EntidadeController::class, 'fornecedores'])->name('fornecedores.index');
     Route::resource('entidades', EntidadeController::class);
@@ -53,7 +60,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('encomendas', EncomendaController::class);
     Route::post('/encomendas/{encomenda}/converter', [EncomendaController::class, 'converter'])->name('encomendas.converter');
     Route::get('/encomendas/{encomenda}/pdf', [EncomendaController::class, 'download'])->name('encomendas.download');
-    Route::resource('ordens-trabalho', OrdemTrabalhoController::class);
+    Route::resource('ordens-trabalho', OrdemTrabalhoController::class)->parameters([
+        'ordens-trabalho' => 'ordemTrabalho',
+    ]);
     Route::resource('faturas-fornecedores', FaturaFornecedorController::class)->names([
         'index' => 'faturas.index',
         'create' => 'faturas.create',

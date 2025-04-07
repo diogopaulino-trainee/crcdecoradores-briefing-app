@@ -59,7 +59,7 @@ onMounted(() => {
     <div class="flex min-h-screen bg-gray-50 text-gray-800">
         <!-- Sidebar -->
         <aside
-            class="scrollbar-thin scrollbar-thumb-[#CDAA62]/60 hover:scrollbar-thumb-[#CDAA62] scrollbar-track-transparent fixed left-0 top-0 hidden h-screen w-64 overflow-y-auto border-r bg-white shadow-sm md:block"
+            class="fixed left-0 top-0 hidden h-screen w-64 overflow-y-auto border-r bg-white shadow-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[#CDAA62]/60 hover:scrollbar-thumb-[#CDAA62] md:block"
         >
             <div class="border-b p-6">
                 <Link :href="route('welcome')">
@@ -156,6 +156,26 @@ onMounted(() => {
                                     :class="{ 'bg-gray-200 font-semibold': route().current('ivas.index') }"
                                 >
                                     <Percent class="h-5 w-5" /> IVA
+                                </Link>
+                            </AccordionContent>
+                        </AccordionItem>
+
+                        <AccordionItem value="gestao-acessos">
+                            <AccordionTrigger class="px-4 text-[18px]">Gestão de Acessos</AccordionTrigger>
+                            <AccordionContent class="space-y-1">
+                                <Link
+                                    :href="route('utilizadores.index')"
+                                    class="flex items-center gap-2 rounded px-4 py-2 text-[15px] hover:bg-gray-100"
+                                    :class="{ 'bg-gray-200 font-semibold': route().current('utilizadores.index') }"
+                                >
+                                    <Users class="h-5 w-5" /> Utilizadores
+                                </Link>
+                                <Link
+                                    :href="route('permissoes.index')"
+                                    class="flex items-center gap-2 rounded px-4 py-2 text-[15px] hover:bg-gray-100"
+                                    :class="{ 'bg-gray-200 font-semibold': route().current('permissoes.index') }"
+                                >
+                                    <UserCog class="h-5 w-5" /> Permissões
                                 </Link>
                             </AccordionContent>
                         </AccordionItem>
@@ -311,7 +331,7 @@ onMounted(() => {
 
                 <!-- Sidebar content com scroll -->
                 <div
-                    class="animate-slide-in scrollbar-thin scrollbar-thumb-[#CDAA62]/60 scrollbar-track-transparent hover:scrollbar-thumb-[#CDAA62] relative z-50 h-full max-h-screen w-64 overflow-y-auto border-r bg-white shadow-lg"
+                    class="animate-slide-in relative z-50 h-full max-h-screen w-64 overflow-y-auto border-r bg-white shadow-lg scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[#CDAA62]/60 hover:scrollbar-thumb-[#CDAA62]"
                 >
                     <nav class="space-y-4 p-4 text-[15px]">
                         <template v-if="$page.props.auth?.user">
@@ -415,6 +435,27 @@ onMounted(() => {
                                             :class="{ 'bg-gray-200 font-semibold': route().current('ivas.index') }"
                                         >
                                             <Percent class="h-4 w-4" /> IVA
+                                        </Link>
+                                    </AccordionContent>
+                                </AccordionItem>
+
+                                <!-- Gestão de Acessos -->
+                                <AccordionItem value="gestao-acessos">
+                                    <AccordionTrigger class="flex items-center gap-2 px-4 text-[15px]"> Gestão de Acessos </AccordionTrigger>
+                                    <AccordionContent class="space-y-1">
+                                        <Link
+                                            :href="route('utilizadores.index')"
+                                            class="flex items-center gap-2 rounded px-4 py-2 hover:bg-gray-100"
+                                            :class="{ 'bg-gray-200 font-semibold': route().current('utilizadores.index') }"
+                                        >
+                                            <Users class="h-4 w-4" /> Utilizadores
+                                        </Link>
+                                        <Link
+                                            :href="route('permissoes.index')"
+                                            class="flex items-center gap-2 rounded px-4 py-2 hover:bg-gray-100"
+                                            :class="{ 'bg-gray-200 font-semibold': route().current('permissoes.index') }"
+                                        >
+                                            <UserCog class="h-4 w-4" /> Permissões
                                         </Link>
                                     </AccordionContent>
                                 </AccordionItem>

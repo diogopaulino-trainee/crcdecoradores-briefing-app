@@ -9,7 +9,7 @@ const props = defineProps({
 </script>
 
 <template>
-    <Head title="Detalhes da Entidade" />
+    <Head :title="`${entidade.tipo === 'cliente' ? 'Cliente' : 'Fornecedor'} #${entidade.numero} - ${entidade.nome} | CRCDecoradores`" />
 
     <AppLayout title="Detalhes da Entidade">
         <div class="mx-auto max-w-3xl space-y-6 rounded bg-white p-8 shadow">

@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
+            $table->string('telemovel')->nullable();
+            $table->enum('estado', ['Ativo', 'Inativo'])->default('Ativo');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->foreignId('funcao_id')->nullable()->constrained('funcoes')->onDelete('set null');

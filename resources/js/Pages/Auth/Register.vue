@@ -16,6 +16,7 @@ const showConfirm = ref(false);
 const form = useForm({
     name: '',
     email: '',
+    telemovel: '',
     password: '',
     password_confirmation: '',
 });
@@ -57,6 +58,16 @@ const submit = () => {
                                 <Input id="email" v-model="form.email" type="email" required autocomplete="username" class="pl-10" />
                             </div>
                             <p v-if="form.errors.email" class="mt-1 text-sm text-red-500">{{ form.errors.email }}</p>
+                        </div>
+
+                        <!-- Telemóvel -->
+                        <div>
+                            <Label for="telemovel" class="mb-2 text-[#CDAA62]">Telemóvel</Label>
+                            <div class="relative">
+                                <User class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#CDAA62]" />
+                                <Input id="telemovel" v-model="form.telemovel" type="text" autocomplete="tel" class="pl-10" />
+                            </div>
+                            <p v-if="form.errors.telemovel" class="mt-1 text-sm text-red-500">{{ form.errors.telemovel }}</p>
                         </div>
 
                         <!-- Password -->

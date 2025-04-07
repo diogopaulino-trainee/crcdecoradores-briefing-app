@@ -33,13 +33,16 @@ class RegisteredUserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'telemovel' => 'nullable|string|max:20',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'telemovel' => $request->telemovel,
             'password' => Hash::make($request->password),
+            'estado' => 'Ativo',
         ]);
 
         event(new Registered($user));

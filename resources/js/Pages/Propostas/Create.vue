@@ -86,6 +86,25 @@ const submit = () => {
                     </FormItem>
                 </FormField>
 
+                <FormField name="cliente_id">
+                    <FormItem>
+                        <FormLabel>Cliente</FormLabel>
+                        <Select v-model="form.cliente_id">
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecionar cliente" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem v-for="cliente in clientes" :key="cliente.id" :value="cliente.id">
+                                    {{ cliente.nome }}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                </FormField>
+
                 <FormField name="data_da_proposta">
                     <FormItem>
                         <FormLabel>Data da Proposta</FormLabel>
@@ -102,25 +121,6 @@ const submit = () => {
                         <FormControl>
                             <Input type="date" v-model="form.validade" />
                         </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                </FormField>
-
-                <FormField name="cliente_id">
-                    <FormItem>
-                        <FormLabel>Cliente</FormLabel>
-                        <Select v-model="form.cliente_id">
-                            <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Selecionar cliente" />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                <SelectItem v-for="cliente in clientes" :key="cliente.id" :value="cliente.id">
-                                    {{ cliente.nome }}
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
                         <FormMessage />
                     </FormItem>
                 </FormField>

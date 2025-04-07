@@ -9,9 +9,9 @@ const props = defineProps({
 </script>
 
 <template>
-    <Head title="Detalhes do Contacto" />
+    <Head :title="`Contacto #${contacto.numero} - CRCDecoradores`" />
 
-    <AppLayout title="Detalhes do Contacto">
+    <AppLayout>
         <div class="mx-auto max-w-3xl space-y-6 rounded bg-white p-8 shadow">
             <h2 class="text-2xl font-bold text-[#CDAA62]">Informação do Contacto</h2>
 

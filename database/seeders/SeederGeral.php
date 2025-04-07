@@ -251,13 +251,35 @@ class SeederGeral extends Seeder
         ]);
 
         // Ordem de Trabalho
-        OrdemTrabalho::create([
-            'numero' => 3001,
-            'data_da_ordem' => now(),
-            'entidade_id' => $cliente->id,
-            'descricao' => 'Montagem de cadeiras',
-            'estado' => 'Ativo',
-        ]);
+        $descricoes = [
+            'Montagem de cadeiras',
+            'Instalação de iluminação',
+            'Reparação de móveis',
+            'Entrega de material',
+            'Montagem de estantes',
+            'Instalação de cortinas',
+            'Manutenção de escritório',
+            'Decoração de sala de reuniões',
+            'Reparação elétrica',
+            'Reorganização de espaço',
+            'Entrega urgente de cadeiras',
+            'Instalação de quadros',
+            'Montagem de armários',
+            'Limpeza pós-obra',
+            'Inspeção de equipamento',
+        ];
+        
+        for ($i = 0; $i < 15; $i++) {
+            $entidade = Entidade::inRandomOrder()->first();
+        
+            OrdemTrabalho::create([
+                'numero' => 3001 + $i,
+                'data_da_ordem' => now()->subDays(rand(0, 60)),
+                'entidade_id' => $entidade->id,
+                'descricao' => $descricoes[$i],
+                'estado' => collect(['Pendente', 'Em Execução', 'Concluída', 'Cancelada'])->random(),
+            ]);
+        }
 
         // Fatura Fornecedor
         FaturaFornecedor::create([

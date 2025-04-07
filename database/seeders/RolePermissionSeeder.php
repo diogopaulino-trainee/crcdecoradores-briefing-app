@@ -5,8 +5,6 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -19,7 +17,6 @@ class RolePermissionSeeder extends Seeder
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         // --- Permissões agrupadas por módulos principais ---
-
         $permissions = [
             // Clientes & Fornecedores
             'entidades.view', 'entidades.create', 'entidades.edit', 'entidades.delete',
@@ -51,7 +48,6 @@ class RolePermissionSeeder extends Seeder
         }
 
         // --- Roles ---
-
         $admin = Role::firstOrCreate(['name' => 'Administrador', 'guard_name' => 'web']);
         $gestor = Role::firstOrCreate(['name' => 'Gestor', 'guard_name' => 'web']);
         $colaborador = Role::firstOrCreate(['name' => 'Colaborador', 'guard_name' => 'web']);
@@ -73,25 +69,5 @@ class RolePermissionSeeder extends Seeder
             'encomendas.view',
             'odt.view',
         ])->get());
-
-        // --- Criação de utilizadores e atribuição de roles ---
-
-        $adminUser = User::firstOrCreate(
-            ['email' => 'johndoe@example.com'],
-            ['name' => 'John Doe', 'password' => Hash::make('password')]
-        );
-        $adminUser->assignRole($admin);
-
-        $gestorUser = User::firstOrCreate(
-            ['email' => 'gestor@example.com'],
-            ['name' => 'Maria Gestora', 'password' => Hash::make('password')]
-        );
-        $gestorUser->assignRole($gestor);
-
-        $colaboradorUser = User::firstOrCreate(
-            ['email' => 'colaborador@example.com'],
-            ['name' => 'Carlos Colaborador', 'password' => Hash::make('password')]
-        );
-        $colaboradorUser->assignRole($colaborador);
     }
 }
