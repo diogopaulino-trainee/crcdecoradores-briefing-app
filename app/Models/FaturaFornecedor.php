@@ -23,6 +23,11 @@ class FaturaFornecedor extends Model
         'estado',
     ];
 
+    protected $casts = [
+        'documento' => 'array',
+        'comprovativo_pagamento' => 'array',
+    ];
+
     public function fornecedor()
     {
         return $this->belongsTo(Entidade::class, 'fornecedor_id');

@@ -29,15 +29,33 @@ const aplicarFiltros = () => {
             preserveState: true,
             replace: true,
         });
-    }, 150);
+    }, 100);
 };
 
 const limparFiltros = () => {
-    filtrosLocais.value = {
-        termo: '',
-        estado: '',
-    };
+    filtrosLocais.value = { termo: '', estado: '' };
     aplicarFiltros();
+};
+
+const showModal = ref(false);
+const faturaAEliminar = ref(null);
+
+const nova = () => router.get(route('faturas.create'));
+const ver = (id) => router.get(route('faturas.show', id));
+const editar = (id) => router.get(route('faturas.edit', id));
+const confirmarEliminar = (id) => {
+    const fatura = props.faturas.data.find((f) => f.id === id);
+    if (fatura) {
+        faturaAEliminar.value = fatura;
+        showModal.value = true;
+    }
+};
+const eliminar = () => {
+    if (faturaAEliminar.value) {
+        router.delete(route('faturas.destroy', { faturaFornecedor: faturaAEliminar.value.id }), {
+            onSuccess: () => router.get(route('faturas.index')),
+        });
+    }
 };
 
 const currentSort = computed(() => props.filtros?.sort || 'data_da_fatura');
@@ -59,9 +77,7 @@ const sortBy = (column) => {
     );
 };
 
-const editar = (id) => router.get(route('faturas-fornecedores.edit', id));
-const ver = (id) => router.get(route('faturas-fornecedores.show', id)); // se tiveres
-const nova = () => router.get(route('faturas-fornecedores.create'));
+const rotatingId = ref(null);
 
 const columns = [
     {
@@ -80,16 +96,16 @@ const columns = [
                 'Número',
                 currentSort.value === 'numero' ? h(currentDirection.value === 'asc' ? ArrowUp : ArrowDown, { class: 'w-4 h-4' }) : null,
             ]),
+        cell: ({ row }) => h('span', row?.numero || '—'),
     },
     {
         accessorFn: (row) => row.fornecedor?.nome,
-        header: 'Fornecedor',
+        header: () =>
+            h('div', { class: 'flex items-center gap-1 cursor-pointer', onClick: () => sortBy('fornecedor_id') }, [
+                'Fornecedor',
+                currentSort.value === 'fornecedor_id' ? h(currentDirection.value === 'asc' ? ArrowUp : ArrowDown, { class: 'w-4 h-4' }) : null,
+            ]),
         cell: ({ row }) => h('span', row?.fornecedor?.nome || '—'),
-    },
-    {
-        accessorFn: (row) => row.encomenda_fornecedor_id,
-        header: 'Encomenda',
-        cell: ({ row }) => h('span', row?.encomendaFornecedor?.numero || '—'),
     },
     {
         accessorKey: 'valor_total',
@@ -113,13 +129,35 @@ const columns = [
             return h(DropdownMenu, null, {
                 default: () => [
                     h(DropdownMenuTrigger, { asChild: true }, () =>
-                        h(Button, { size: 'icon', variant: 'ghost', class: 'h-8 w-8' }, () =>
-                            h(Settings, { class: 'w-5 h-5 text-gray-500', 'stroke-width': 2 }),
+                        h(
+                            Button,
+                            {
+                                size: 'icon',
+                                variant: 'ghost',
+                                class: 'h-8 w-8',
+                                onClick: () => {
+                                    rotatingId.value = id;
+                                    setTimeout(() => (rotatingId.value = null), 500);
+                                },
+                            },
+                            () =>
+                                h(Settings, {
+                                    class: [
+                                        '!w-6 !h-6 text-gray-500 transition-transform duration-500',
+                                        rotatingId.value === id ? 'animate-spin' : '',
+                                    ],
+                                    'stroke-width': 2,
+                                }),
                         ),
                     ),
                     h(DropdownMenuContent, { align: 'end' }, () => [
                         h(DropdownMenuItem, { onClick: () => ver(id), class: 'cursor-pointer' }, () => 'Ver'),
                         h(DropdownMenuItem, { onClick: () => editar(id), class: 'cursor-pointer' }, () => 'Editar'),
+                        h(
+                            DropdownMenuItem,
+                            { onClick: () => confirmarEliminar(id), class: 'cursor-pointer text-red-600 hover:text-red-700' },
+                            () => 'Eliminar',
+                        ),
                     ]),
                 ],
             });
@@ -129,11 +167,11 @@ const columns = [
 </script>
 
 <template>
-    <Head title="Faturas de Fornecedores" />
+    <Head title="Faturas de Fornecedor - CRCDecoradores" />
 
     <AppLayout>
         <div class="mb-4 flex flex-col gap-4">
-            <h1 class="text-2xl font-bold">Faturas de Fornecedores</h1>
+            <h1 class="text-2xl font-bold">Faturas de Fornecedor</h1>
 
             <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <input
@@ -161,7 +199,6 @@ const columns = [
 
         <DataTable :columns="columns" :data="faturas.data" class="rounded border shadow" />
 
-        <!-- Paginação -->
         <div class="mt-4 flex justify-center">
             <ul class="flex gap-1">
                 <li v-for="link in faturas.links" :key="link.label">
@@ -178,6 +215,21 @@ const columns = [
                     <span v-else class="px-3 py-1 text-sm text-gray-400" v-html="link.label" />
                 </li>
             </ul>
+        </div>
+
+        <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div class="rounded-lg bg-white p-6 shadow-xl">
+                <h2 class="mb-4 text-lg font-semibold">Confirmar Eliminação</h2>
+                <p class="mb-6">
+                    Tens a certeza que queres eliminar a fatura
+                    <strong class="text-[#CDAA62]">{{ faturaAEliminar?.numero }}</strong
+                    >?
+                </p>
+                <div class="flex justify-end gap-2">
+                    <Button variant="outline" @click="showModal = false">Cancelar</Button>
+                    <Button variant="destructive" class="bg-[#CDAA62] text-white hover:bg-[#b38f52]" @click="eliminar">Eliminar</Button>
+                </div>
+            </div>
         </div>
     </AppLayout>
 </template>

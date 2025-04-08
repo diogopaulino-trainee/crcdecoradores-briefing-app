@@ -63,7 +63,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('ordens-trabalho', OrdemTrabalhoController::class)->parameters([
         'ordens-trabalho' => 'ordemTrabalho',
     ]);
-    Route::resource('faturas-fornecedores', FaturaFornecedorController::class)->names([
+    Route::resource('faturas-fornecedores', FaturaFornecedorController::class)
+    ->parameters(['faturas-fornecedores' => 'faturaFornecedor'])
+    ->names([
         'index' => 'faturas.index',
         'create' => 'faturas.create',
         'store' => 'faturas.store',

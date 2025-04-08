@@ -20,8 +20,8 @@ return new class extends Migration
             $table->foreignId('encomenda_fornecedor_id')->nullable()->constrained('encomendas')->onDelete('cascade');
             $table->decimal('valor_total', 10, 2);
             // Campos para ficheiros anexos – podem ser armazenados como strings (caminhos)
-            $table->string('documento')->nullable();
-            $table->string('comprovativo_pagamento')->nullable();
+            $table->json('documento')->nullable();
+            $table->json('comprovativo_pagamento')->nullable();
             $table->enum('estado', ['Pendente', 'Paga'])->default('Pendente');
             $table->timestamps();
         });

@@ -30,4 +30,9 @@ class Encomenda extends Model
     {
         return $this->hasMany(LinhaEncomenda::class, 'encomenda_id');
     }
+
+    public function fornecedorEncomenda()
+    {
+        return $this->belongsTo(Entidade::class, 'cliente_id');
+    }
 }

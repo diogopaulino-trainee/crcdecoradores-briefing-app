@@ -282,6 +282,10 @@ class SeederGeral extends Seeder
         }
 
         // Fatura Fornecedor
+        Storage::disk('local')->deleteDirectory('faturas/documentos');
+        Storage::disk('local')->makeDirectory('faturas/documentos');
+        Storage::disk('local')->deleteDirectory('faturas/comprovativos');
+        Storage::disk('local')->makeDirectory('faturas/comprovativos');
         FaturaFornecedor::create([
             'numero' => 4001,
             'data_da_fatura' => now()->subDays(1),
@@ -289,8 +293,8 @@ class SeederGeral extends Seeder
             'fornecedor_id' => $fornecedor->id,
             'encomenda_fornecedor_id' => $encomendaFornecedor->id,
             'valor_total' => 99.90,
-            'documento' => 'fatura4001.pdf',
-            'comprovativo_pagamento' => 'comprovativo4001.pdf',
+            'documento' => null,
+            'comprovativo_pagamento' => null,
             'estado' => 'Paga',
         ]);
     }
