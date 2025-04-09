@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('ivas', function (Blueprint $table) {
             $table->id();
             $table->string('nome');
-            $table->unsignedInteger('percentagem');
+            $table->decimal('percentagem', 5, 2)->unique();
             $table->timestamps();
         });
     }

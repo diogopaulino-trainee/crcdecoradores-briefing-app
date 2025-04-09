@@ -8,12 +8,24 @@ use Inertia\Inertia;
 
 class IvaController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $ivas = Iva::all();
+        $query = Iva::query();
+
+        if ($request->filled('termo')) {
+            $query->where('nome', 'like', '%' . $request->termo . '%')
+                ->orWhere('percentagem', 'like', '%' . $request->termo . '%');
+        }
+
+        $sort = $request->input('sort', 'nome');
+        $direction = $request->input('direction', 'asc');
+        $query->orderBy($sort, $direction);
+
+        $ivas = $query->paginate(10)->withQueryString();
 
         return Inertia::render('Ivas/Index', [
             'ivas' => $ivas,
+            'filtros' => $request->only(['termo', 'sort', 'direction']),
         ]);
     }
 
@@ -24,12 +36,17 @@ class IvaController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'nome' => 'required',
-            'percentagem' => 'required|numeric',
+        $validated = $request->validate([
+            'nome' => 'required|string|max:255',
+            'percentagem' => 'required|numeric|unique:ivas,percentagem',
+        ], [
+            'percentagem.unique' => 'Já existe um IVA com essa percentagem.',
         ]);
 
-        $iva = Iva::create($request->all());
+        $iva = Iva::firstOrCreate(
+            ['percentagem' => $validated['percentagem']],
+            ['nome' => $validated['nome']]
+        );
 
         activity()
             ->performedOn($iva)
@@ -49,8 +66,10 @@ class IvaController extends Controller
     public function update(Request $request, Iva $iva)
     {
         $request->validate([
-            'nome' => 'required',
-            'percentagem' => 'required|numeric',
+            'nome' => 'required|string|max:255',
+            'percentagem' => 'required|numeric|unique:ivas,percentagem,' . $iva->id,
+        ], [
+            'percentagem.unique' => 'Já existe um IVA com essa percentagem.',
         ]);
 
         $iva->update($request->all());
@@ -65,6 +84,12 @@ class IvaController extends Controller
 
     public function destroy(Iva $iva)
     {
+        if ($iva->artigos()->exists()) {
+            return redirect()
+                ->route('ivas.index')
+                ->with('error', 'Não é possível eliminar o IVA, pois está a ser utilizado em artigos.');
+        }
+
         $iva->delete();
 
         activity()
@@ -72,6 +97,8 @@ class IvaController extends Controller
             ->causedBy(auth()->user())
             ->log('Eliminou o registo de IVA.');
 
-        return redirect()->route('ivas.index')->with('success', 'IVA eliminado com sucesso.');
+        return redirect()
+            ->route('ivas.index')
+            ->with('success', 'IVA eliminado com sucesso.');
     }
 }

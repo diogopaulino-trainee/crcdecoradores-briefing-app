@@ -13,4 +13,13 @@ class Iva extends Model
         'nome',
         'percentagem',
     ];
+
+    protected $casts = [
+        'percentagem' => 'float',
+    ];
+
+    public function artigos()
+    {
+        return $this->hasMany(Artigo::class);
+    }
 }
