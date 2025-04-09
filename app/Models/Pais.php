@@ -15,4 +15,9 @@ class Pais extends Model
         'nome',
         'codigo',
     ];
+
+    public function entidades()
+    {
+        return $this->hasMany(Entidade::class);
+    }
 }
