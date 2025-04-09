@@ -27,7 +27,7 @@ class PaisController extends Controller
             $query->orderBy('nome');
         }
 
-        $paises = $query->paginate(15)->withQueryString();
+        $paises = $query->paginate(10)->withQueryString();
 
         return Inertia::render('Paises/Index', [
             'paises' => $paises,

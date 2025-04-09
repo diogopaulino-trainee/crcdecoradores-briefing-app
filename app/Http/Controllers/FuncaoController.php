@@ -8,12 +8,26 @@ use Inertia\Inertia;
 
 class FuncaoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $funcoes = Funcao::all();
+        $query = Funcao::query();
+
+        if ($request->filled('termo')) {
+            $query->where('nome', 'like', '%' . $request->termo . '%');
+        }
+
+        if ($request->filled('sort') && in_array($request->sort, ['nome'])) {
+            $direction = $request->get('direction', 'asc') === 'desc' ? 'desc' : 'asc';
+            $query->orderBy($request->sort, $direction);
+        } else {
+            $query->orderBy('nome');
+        }
+
+        $funcoes = $query->paginate(10)->withQueryString();
 
         return Inertia::render('Funcoes/Index', [
             'funcoes' => $funcoes,
+            'filtros' => $request->only(['termo', 'sort', 'direction']),
         ]);
     }
 
@@ -24,16 +38,24 @@ class FuncaoController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'nome' => 'required',
+        $validated = $request->validate([
+            'nome' => 'required|string|max:255|unique:funcoes,nome',
+            'descricao' => 'required|string|max:1000',
+        ], [
+            'nome.unique' => 'Já existe uma função com esse nome.',
         ]);
 
-        $funcao = Funcao::create($request->all());
+        $funcao = Funcao::firstOrCreate(
+            ['nome' => $validated['nome']],
+            ['descricao' => $validated['descricao']]
+        );
 
-        activity()
-            ->performedOn($funcao)
-            ->causedBy(auth()->user())
-            ->log('Criou uma função.');
+        if ($funcao->wasRecentlyCreated) {
+            activity()
+                ->performedOn($funcao)
+                ->causedBy(auth()->user())
+                ->log('Criou uma função.');
+        }
 
         return redirect()->route('funcoes.index')->with('success', 'Função criada com sucesso.');
     }
@@ -47,11 +69,14 @@ class FuncaoController extends Controller
 
     public function update(Request $request, Funcao $funcao)
     {
-        $request->validate([
-            'nome' => 'required',
+        $validated = $request->validate([
+            'nome' => 'required|string|max:255|unique:funcoes,nome,' . $funcao->id,
+            'descricao' => 'required|string|max:1000',
+        ], [
+            'nome.unique' => 'Já existe uma função com esse nome.',
         ]);
 
-        $funcao->update($request->all());
+        $funcao->update($validated);
 
         activity()
             ->performedOn($funcao)

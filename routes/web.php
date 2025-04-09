@@ -77,11 +77,13 @@ Route::middleware('auth')->group(function () {
     Route::resource('empresas', EmpresaController::class);
     Route::resource('artigos', ArtigoController::class);
     Route::resource('ivas', IvaController::class);
-    Route::resource('funcoes', FuncaoController::class);
+    Route::resource('funcoes', FuncaoController::class)->parameters([
+        'funcoes' => 'funcao',
+    ]);
     Route::resource('paises', PaisController::class)->parameters([
         'paises' => 'pais',
     ]);
-
+    
     Route::get('/ficheiros/privado/{caminho}', [FicheiroSeguroController::class, 'ver'])
         ->where('caminho', '.*')
         ->name('ficheiro.privado');
