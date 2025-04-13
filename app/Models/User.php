@@ -48,6 +48,8 @@ class User extends Authenticatable
         'two_factor_confirmed_at' => 'datetime',
     ];
 
+    protected $guard_name = 'web';
+
     public function funcao()
     {
         return $this->belongsTo(Funcao::class);
@@ -56,5 +58,18 @@ class User extends Authenticatable
     public function isActive(): bool
     {
         return $this->estado === 'Ativo';
+    }
+
+    public function hasPermissionTo($permission, $guardName = null): bool
+    {
+        $rolesAtivas = $this->roles()->where('estado', 'Ativo')->get();
+
+        foreach ($rolesAtivas as $role) {
+            if ($role->hasPermissionTo($permission)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

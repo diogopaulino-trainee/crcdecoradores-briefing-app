@@ -13,61 +13,135 @@ class RolePermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        // Reset cache
+        // Resetar cache de permissões
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // --- Permissões agrupadas por módulos principais ---
+        // --- Permissões por módulo ---
         $permissions = [
-            // Clientes & Fornecedores
-            'entidades.view', 'entidades.create', 'entidades.edit', 'entidades.delete',
-
+            // Artigos
+            'artigos.view', 'artigos.create', 'artigos.edit', 'artigos.delete',
+        
+            // Clientes
+            'clientes.view',
+        
             // Contactos
             'contactos.view', 'contactos.create', 'contactos.edit', 'contactos.delete',
-
-            // Propostas
-            'propostas.view', 'propostas.create', 'propostas.edit', 'propostas.delete',
-
+        
+            // Empresa
+            'empresa.view', 'empresa.edit',
+        
             // Encomendas
             'encomendas.view', 'encomendas.create', 'encomendas.edit', 'encomendas.delete',
-
-            // Ordens de Trabalho
-            'odt.view', 'odt.create', 'odt.edit', 'odt.delete',
-
-            // Configurações
-            'config.view', 'config.edit',
-
-            // Utilizadores
-            'users.view', 'users.create', 'users.edit', 'users.delete',
-
+        
+            // Entidades (Clientes e Fornecedores)
+            'entidades.view', 'entidades.create', 'entidades.edit', 'entidades.delete',
+        
+            // Faturas de Fornecedor
+            'faturas.view', 'faturas.create', 'faturas.edit', 'faturas.delete',
+        
+            // Funções
+            'funcoes.view', 'funcoes.create', 'funcoes.edit', 'funcoes.delete',
+        
+            // IVAs
+            'ivas.view', 'ivas.create', 'ivas.edit', 'ivas.delete',
+        
             // Logs
-            'logs.view',
+            'logs.view', 'logs.delete',
+        
+            // Ordens de Trabalho
+            'ordens-trabalho.view', 'ordens-trabalho.create', 'ordens-trabalho.edit', 'ordens-trabalho.delete',
+        
+            // Países
+            'paises.view', 'paises.create', 'paises.edit', 'paises.delete',
+        
+            // Permissões (Roles)
+            'permissoes.view', 'permissoes.create', 'permissoes.edit', 'permissoes.delete',
+        
+            // Propostas
+            'propostas.view', 'propostas.create', 'propostas.edit', 'propostas.delete',
+        
+            // Utilizadores
+            'utilizadores.view', 'utilizadores.create', 'utilizadores.edit', 'utilizadores.delete',
         ];
 
+        // Criar permissões
         foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+            Permission::firstOrCreate([
+                'name' => $permission,
+                'guard_name' => 'web',
+            ]);
         }
 
-        // --- Roles ---
-        $admin = Role::firstOrCreate(['name' => 'Administrador', 'guard_name' => 'web']);
-        $gestor = Role::firstOrCreate(['name' => 'Gestor', 'guard_name' => 'web']);
-        $colaborador = Role::firstOrCreate(['name' => 'Colaborador', 'guard_name' => 'web']);
+        // --- Criar Roles com estado ---
+        $admin = Role::firstOrCreate([
+            'name' => 'Administrador',
+            'guard_name' => 'web',
+        ], [
+            'estado' => 'Ativo',
+        ]);
 
-        // Admin tem todas
+        $gestor = Role::firstOrCreate([
+            'name' => 'Gestor',
+            'guard_name' => 'web',
+        ], [
+            'estado' => 'Ativo',
+        ]);
+
+        $colaborador = Role::firstOrCreate([
+            'name' => 'Colaborador',
+            'guard_name' => 'web',
+        ], [
+            'estado' => 'Ativo',
+        ]);
+
+        // --- Atribuir permissões por perfil ---
+
+        // Admin tem tudo
         $admin->syncPermissions(Permission::all());
 
-        // Gestor: tudo exceto users.* e config.edit
+        // Gestor: tudo exceto utilizadores e edição de configurações
         $gestor->syncPermissions(Permission::whereNotIn('name', [
-            'users.view', 'users.create', 'users.edit', 'users.delete',
-            'config.edit',
+            'utilizadores.view', 'utilizadores.create', 'utilizadores.edit', 'utilizadores.delete',
+            'permissoes.view', 'permissoes.create', 'permissoes.edit', 'permissoes.delete',
+            'empresa.edit',
         ])->get());
-
-        // Colaborador: acesso limitado
+        
         $colaborador->syncPermissions(Permission::whereIn('name', [
             'entidades.view', 'entidades.create', 'entidades.edit',
             'contactos.view', 'contactos.create',
             'propostas.view', 'propostas.create',
             'encomendas.view',
-            'odt.view',
+            'ordens-trabalho.view',
+            'faturas.view',
+        ])->get());
+
+        // --- Grupo de Teste: acesso a tudo exceto Artigos ---
+        $teste = Role::firstOrCreate([
+            'name' => 'Teste',
+            'guard_name' => 'web',
+        ], [
+            'estado' => 'Ativo',
+        ]);
+
+        // Todas as permissões exceto artigos
+        $permissoesSemArtigos = Permission::whereNotIn('name', [
+            'artigos.view', 'artigos.create', 'artigos.edit', 'artigos.delete',
+        ])->get();
+
+        $teste->syncPermissions($permissoesSemArtigos);
+
+        $guest = Role::firstOrCreate([
+            'name' => 'Guest',
+            'guard_name' => 'web',
+        ], [
+            'estado' => 'Ativo',
+        ]);
+        
+        $guest->syncPermissions(Permission::whereIn('name', [
+            'artigos.view',
+            'artigos.create',
+            'artigos.edit',
+            'artigos.delete',
         ])->get());
     }
 }

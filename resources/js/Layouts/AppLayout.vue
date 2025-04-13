@@ -61,11 +61,19 @@ onMounted(() => {
         <aside
             class="fixed left-0 top-0 hidden h-screen w-64 overflow-y-auto border-r bg-white shadow-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[#CDAA62]/60 hover:scrollbar-thumb-[#CDAA62] md:block"
         >
-            <div class="border-b p-6">
-                <Link :href="route('welcome')">
-                    <img src="/images/logo_crc.png" alt="Logo CRC" class="mx-auto h-20" />
+            <div class="p-6">
+                <Link
+                    :href="route('welcome')"
+                    class="block rounded-2xl bg-white/60 shadow-md ring-1 ring-[#CDAA62]/20 backdrop-blur-sm transition-all duration-300 hover:ring-[#CDAA62]/40"
+                >
+                    <img
+                        :src="$page.props.logotipoEmpresa"
+                        alt="Logo CRC"
+                        class="h-30 mx-auto object-contain px-4 py-6 transition-transform duration-300 ease-in-out hover:scale-105"
+                    />
                 </Link>
             </div>
+
             <nav class="space-y-2 p-4">
                 <template v-if="$page.props.auth?.user">
                     <div>
@@ -212,9 +220,9 @@ onMounted(() => {
                                     <ScrollText class="h-5 w-5" /> Logs
                                 </Link>
                                 <Link
-                                    :href="route('empresas.index')"
+                                    :href="route('empresa.index')"
                                     class="flex items-center gap-2 rounded px-4 py-2 text-[15px] hover:bg-gray-100"
-                                    :class="{ 'bg-gray-200 font-semibold': route().current('empresas.index') }"
+                                    :class="{ 'bg-gray-200 font-semibold': route().current('empresa.index') }"
                                 >
                                     <Building class="h-5 w-5" /> Empresa
                                 </Link>
@@ -493,9 +501,9 @@ onMounted(() => {
                                             <ScrollText class="h-4 w-4" /> Logs
                                         </Link>
                                         <Link
-                                            :href="route('empresas.index')"
+                                            :href="route('empresa.index')"
                                             class="flex items-center gap-2 rounded px-4 py-2 hover:bg-gray-100"
-                                            :class="{ 'bg-gray-200 font-semibold': route().current('empresas.index') }"
+                                            :class="{ 'bg-gray-200 font-semibold': route().current('empresa.index') }"
                                         >
                                             <Building class="h-4 w-4" /> Empresa
                                         </Link>
@@ -529,7 +537,7 @@ onMounted(() => {
 
             <!-- Footer -->
             <footer class="border-t bg-white py-4 text-center text-sm text-gray-500">
-                &copy; {{ new Date().getFullYear() }} CRCDecoradores. Todos os direitos reservados.
+                &copy; {{ new Date().getFullYear() }} {{ $page.props.empresa?.nome ?? 'CRCDecoradores' }}. Todos os direitos reservados.
             </footer>
         </div>
     </div>

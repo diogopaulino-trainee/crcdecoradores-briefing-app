@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Entidade;
 use App\Models\OrdemTrabalho;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use Throwable;
 
 class OrdemTrabalhoController extends Controller
 {
@@ -34,22 +36,57 @@ class OrdemTrabalhoController extends Controller
 
         $ordens = $query->paginate(10)->withQueryString();
 
+        activity()
+            ->useLog('Ordens de Trabalho')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log('Acedeu à listagem das ordens de trabalho.');
+
         return Inertia::render('OrdensTrabalho/Index', [
             'ordens' => $ordens,
             'filtros' => $request->only(['termo', 'estado', 'sort', 'direction']),
         ]);
     }
 
-    public function show(OrdemTrabalho $ordemTrabalho)
+    public function show(Request $request, OrdemTrabalho $ordemTrabalho)
     {
+        $ordemTrabalho->load('entidade');
+
+        activity()
+        ->useLog('Ordens de Trabalho')
+        ->performedOn($ordemTrabalho)
+        ->causedBy(auth()->user())
+        ->withProperties([
+            'numero' => $ordemTrabalho->numero,
+            'entidade' => $ordemTrabalho->entidade?->nome,
+            'estado' => $ordemTrabalho->estado,
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ])
+        ->log("Acedeu à visualização da ordem de trabalho nº {$ordemTrabalho->numero} ({$ordemTrabalho->estado}) da entidade \"{$ordemTrabalho->entidade?->nome}\".");
+
+
         return Inertia::render('OrdensTrabalho/Show', [
-            'ordemTrabalho' => $ordemTrabalho->load('entidade'),
-        ]);
+        'ordemTrabalho' => $ordemTrabalho,
+    ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $proximoNumero = (OrdemTrabalho::max('numero') ?? 0) + 1;
+
+        activity()
+        ->useLog('Ordens de Trabalho')
+        ->causedBy(auth()->user())
+        ->withProperties([
+            'proximo_numero' => $proximoNumero,
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ])
+        ->log("Acedeu ao formulário de criação de nova ordem de trabalho (nº sugerido: {$proximoNumero}).");
 
         return Inertia::render('OrdensTrabalho/Create', [
             'entidades' => Entidade::all(),
@@ -68,20 +105,50 @@ class OrdemTrabalhoController extends Controller
 
         $validated['numero'] = (OrdemTrabalho::max('numero') ?? 0) + 1;
 
-        $ordem = OrdemTrabalho::create($validated);
+        DB::beginTransaction();
+        try {
+            $ordem = OrdemTrabalho::create($validated);
 
-        activity()
-            ->performedOn($ordem)
-            ->causedBy(auth()->user())
-            ->log('Criou uma ordem de trabalho.');
+            activity()
+                ->useLog('Ordens de Trabalho')
+                ->performedOn($ordem)
+                ->causedBy(auth()->user())
+                ->withProperties([
+                    'numero' => $ordem->numero,
+                    'entidade_id' => $ordem->entidade_id,
+                    'estado' => $ordem->estado,
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ])
+                ->log("Criou a ordem de trabalho nº {$ordem->numero} para a entidade ID {$ordem->entidade_id} com estado \"{$ordem->estado}\".");
 
-        return redirect()->route('ordens-trabalho.index')->with('success', 'Ordem de trabalho criada com sucesso.');
+            DB::commit();
+
+            return redirect()->route('ordens-trabalho.index')->with('success', 'Ordem de trabalho criada com sucesso.');
+        } catch (Throwable $e) {
+            DB::rollBack();
+            report($e);
+            return redirect()->back()->withErrors('Erro ao criar a ordem de trabalho.')->withInput();
+        }
     }
 
-    public function edit(OrdemTrabalho $ordemTrabalho)
+    public function edit(Request $request, OrdemTrabalho $ordemTrabalho)
     {
         $entidades = Entidade::all();
         $ordemTrabalho->load('entidade');
+
+        activity()
+        ->useLog('Ordens de Trabalho')
+        ->performedOn($ordemTrabalho)
+        ->causedBy(auth()->user())
+        ->withProperties([
+            'numero' => $ordemTrabalho->numero,
+            'entidade' => $ordemTrabalho->entidade?->nome,
+            'estado' => $ordemTrabalho->estado,
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ])
+        ->log("Acedeu à edição da ordem de trabalho nº {$ordemTrabalho->numero} ({$ordemTrabalho->estado}) da entidade \"{$ordemTrabalho->entidade?->nome}\".");
 
         return Inertia::render('OrdensTrabalho/Edit', [
             'ordemTrabalho' => $ordemTrabalho,
@@ -102,21 +169,37 @@ class OrdemTrabalhoController extends Controller
         $ordemTrabalho->update($validated);
 
         activity()
-            ->performedOn($ordemTrabalho)
-            ->causedBy(auth()->user())
-            ->log('Atualizou a ordem de trabalho.');
+        ->useLog('Ordens de Trabalho')
+        ->performedOn($ordemTrabalho)
+        ->causedBy(auth()->user())
+        ->withProperties([
+            'numero' => $ordemTrabalho->numero,
+            'entidade_id' => $ordemTrabalho->entidade_id,
+            'estado' => $ordemTrabalho->estado,
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ])
+        ->log("Atualizou a ordem de trabalho nº {$ordemTrabalho->numero} para entidade ID {$ordemTrabalho->entidade_id}, novo estado: \"{$ordemTrabalho->estado}\".");
 
         return redirect()->route('ordens-trabalho.index')->with('success', 'Ordem de trabalho atualizada com sucesso.');
     }
 
-    public function destroy(OrdemTrabalho $ordemTrabalho)
+    public function destroy(Request $request, OrdemTrabalho $ordemTrabalho)
     {
         $ordemTrabalho->delete();
 
         activity()
-            ->performedOn($ordemTrabalho)
-            ->causedBy(auth()->user())
-            ->log('Eliminou a ordem de trabalho.');
+        ->useLog('Ordens de Trabalho')
+        ->performedOn($ordemTrabalho)
+        ->causedBy(auth()->user())
+        ->withProperties([
+            'numero' => $ordemTrabalho->numero,
+            'entidade_id' => $ordemTrabalho->entidade_id,
+            'estado' => $ordemTrabalho->estado,
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ])
+        ->log("Eliminou a ordem de trabalho nº {$ordemTrabalho->numero} da entidade ID {$ordemTrabalho->entidade_id} com estado \"{$ordemTrabalho->estado}\".");
 
         return redirect()->route('ordens-trabalho.index')->with('success', 'Ordem de trabalho eliminada com sucesso.');
     }

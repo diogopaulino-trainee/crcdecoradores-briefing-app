@@ -23,14 +23,32 @@ class IvaController extends Controller
 
         $ivas = $query->paginate(10)->withQueryString();
 
+        activity()
+            ->useLog('IVAs')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log('Listou os registos de IVA.');
+
         return Inertia::render('Ivas/Index', [
             'ivas' => $ivas,
             'filtros' => $request->only(['termo', 'sort', 'direction']),
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        activity()
+            ->useLog('IVAs')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log('Acedeu ao formulário de criação de IVA.');
+
         return Inertia::render('Ivas/Create');
     }
 
@@ -49,15 +67,34 @@ class IvaController extends Controller
         );
 
         activity()
+            ->useLog('IVAs')
             ->performedOn($iva)
             ->causedBy(auth()->user())
-            ->log('Criou um registo de IVA.');
+            ->withProperties([
+                'nome' => $iva->nome,
+                'percentagem' => $iva->percentagem,
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log("Criou o IVA: {$iva->nome} ({$iva->percentagem}%).");
 
         return redirect()->route('ivas.index')->with('success', 'IVA criado com sucesso.');
     }
 
-    public function edit(Iva $iva)
+    public function edit(Request $request, Iva $iva)
     {
+        activity()
+            ->useLog('IVAs')
+            ->performedOn($iva)
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'nome' => $iva->nome,
+                'percentagem' => $iva->percentagem,
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log("Acedeu à edição do IVA: {$iva->nome} ({$iva->percentagem}%).");
+
         return Inertia::render('Ivas/Edit', [
             'iva' => $iva,
         ]);
@@ -75,9 +112,16 @@ class IvaController extends Controller
         $iva->update($request->all());
 
         activity()
+            ->useLog('IVAs')
             ->performedOn($iva)
             ->causedBy(auth()->user())
-            ->log('Atualizou o registo de IVA.');
+            ->withProperties([
+                'nome' => $iva->nome,
+                'percentagem' => $iva->percentagem,
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log("Atualizou o IVA: {$iva->nome} ({$iva->percentagem}%).");
 
         return redirect()->route('ivas.index')->with('success', 'IVA atualizado com sucesso.');
     }
@@ -90,12 +134,22 @@ class IvaController extends Controller
                 ->with('error', 'Não é possível eliminar o IVA, pois está a ser utilizado em artigos.');
         }
 
+        $nome = $iva->nome;
+        $percentagem = $iva->percentagem;
+
         $iva->delete();
 
         activity()
+            ->useLog('IVAs')
             ->performedOn($iva)
             ->causedBy(auth()->user())
-            ->log('Eliminou o registo de IVA.');
+            ->withProperties([
+                'nome' => $nome,
+                'percentagem' => $percentagem,
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log("Eliminou o IVA: {$nome} ({$percentagem}%).");
 
         return redirect()
             ->route('ivas.index')

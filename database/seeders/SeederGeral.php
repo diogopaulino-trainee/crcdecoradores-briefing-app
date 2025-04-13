@@ -67,16 +67,6 @@ class SeederGeral extends Seeder
 
         $ivas = [$iva23, $iva6, $iva0];
 
-        // Empresa
-        Empresa::create([
-            'logotipo' => 'logo_crc.png',
-            'nome' => 'CRC Decoradores',
-            'morada' => 'Rua das Flores 123',
-            'codigo_postal' => '1000-000',
-            'localidade' => 'Lisboa',
-            'numero_contribuinte' => '501234567',
-        ]);
-
         // Entidades
         $cliente = null;
         $numeroContacto = 1;
@@ -296,6 +286,29 @@ class SeederGeral extends Seeder
             'documento' => null,
             'comprovativo_pagamento' => null,
             'estado' => 'Paga',
+        ]);
+
+        Storage::disk('local')->makeDirectory('logos');
+
+        $files = Storage::disk('local')->files('logos');
+        foreach ($files as $file) {
+            if (basename($file) !== 'logo_crc.png') {
+                Storage::disk('local')->delete($file);
+            }
+        }
+
+        if (!Storage::disk('local')->exists('logos/logo_crc.png')) {
+            Storage::disk('local')->copy('logo_crc.png', 'logos/logo_crc.png');
+        }
+
+        // Empresa
+        Empresa::create([
+            'logotipo' => 'logos/logo_crc.png',
+            'nome' => 'CRC Decoradores',
+            'morada' => 'Rua António Saúde 58',
+            'codigo_postal' => '1500-048',
+            'localidade' => 'Lisboa',
+            'numero_contribuinte' => '501234567',
         ]);
     }
 }

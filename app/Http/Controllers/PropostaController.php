@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Artigo;
+use App\Models\Empresa;
 use App\Models\Encomenda;
 use App\Models\Entidade;
 use App\Models\Proposta;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -28,6 +30,19 @@ class PropostaController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        activity()
+            ->useLog('Propostas')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'termo' => $request->input('termo'),
+                'estado' => $request->input('estado'),
+                'sort' => $sort,
+                'direction' => $direction,
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log('Acedeu à listagem de propostas.');
+
         return Inertia::render('Propostas/Index', [
             'propostas' => $propostas,
             'filtros' => $request->only(['termo', 'estado', 'sort', 'direction']),
@@ -38,18 +53,38 @@ class PropostaController extends Controller
     {
         $proposta->load(['cliente', 'linhas.artigo.iva']);
 
+        activity()
+            ->useLog('Propostas')
+            ->performedOn($proposta)
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'numero' => $proposta->numero,
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log("Visualizou a proposta nº {$proposta->numero}.");
+
         return Inertia::render('Propostas/Show', [
             'proposta' => $proposta,
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $clientes = Entidade::where('tipo', 'cliente')->get();
         $fornecedores = Entidade::where('tipo', 'fornecedor')->get();
 
         $ultimoNumero = Proposta::max('numero') ?? 0;
         $proximoNumero = $ultimoNumero + 1;
+
+        activity()
+            ->useLog('Propostas')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log('Acedeu ao formulário de criação de proposta.');
 
         return Inertia::render('Propostas/Create', [
             'clientes' => $clientes,
@@ -62,7 +97,6 @@ class PropostaController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'numero' => 'required|unique:propostas,numero',
             'data_da_proposta' => 'required|date',
             'cliente_id' => 'required|exists:entidades,id',
             'validade' => 'required|date',
@@ -73,9 +107,17 @@ class PropostaController extends Controller
             'linhas.*.preco_unitario' => 'required|numeric|min:0',
         ]);
 
-        $proposta = Proposta::create($validated);
+        $proposta = DB::transaction(function () use ($validated, $request) {
+            $lastNumero = DB::table('propostas')
+                ->select('numero')
+                ->orderByDesc('numero')
+                ->lockForUpdate()
+                ->value('numero') ?? 1000;
 
-        if ($request->has('linhas')) {
+            $validated['numero'] = $lastNumero + 1;
+
+            $proposta = Proposta::create($validated);
+
             $total = 0;
             foreach ($request->linhas as $linha) {
                 $proposta->linhas()->create([
@@ -83,25 +125,45 @@ class PropostaController extends Controller
                     'quantidade' => $linha['quantidade'],
                     'preco_unitario' => $linha['preco_unitario'],
                 ]);
-
                 $total += $linha['quantidade'] * $linha['preco_unitario'];
             }
+
             $proposta->update(['valor_total' => $total]);
-        }
+
+            return $proposta;
+        });
 
         activity()
+            ->useLog('Propostas')
             ->performedOn($proposta)
             ->causedBy(auth()->user())
-            ->log('Criou uma proposta.');
+            ->withProperties([
+                'numero' => $proposta->numero,
+                'cliente_id' => $proposta->cliente_id,
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log("Criou a proposta nº {$proposta->numero}.");
 
         return redirect()->route('propostas.index')->with('success', 'Proposta criada com sucesso.');
     }
 
-    public function edit(Proposta $proposta)
+    public function edit(Request $request, Proposta $proposta)
     {
         $clientes = Entidade::where('tipo', 'cliente')->get();
         $fornecedores = Entidade::where('tipo', 'fornecedor')->get();
         $artigos = Artigo::all();
+
+        activity()
+            ->useLog('Propostas')
+            ->performedOn($proposta)
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'numero' => $proposta->numero,
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log("Acedeu à edição da proposta nº {$proposta->numero}.");
 
         return Inertia::render('Propostas/Edit', [
             'proposta' => $proposta->load('linhas:id,proposta_id,artigo_id,quantidade,preco_unitario,fornecedor_id'),
@@ -152,28 +214,53 @@ class PropostaController extends Controller
         }
 
         activity()
+            ->useLog('Propostas')
             ->performedOn($proposta)
             ->causedBy(auth()->user())
-            ->log('Atualizou a proposta.');
+            ->withProperties([
+                'numero' => $proposta->numero,
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log("Atualizou a proposta nº {$proposta->numero}.");
 
         return redirect()->route('propostas.index')->with('success', 'Proposta atualizada com sucesso.');
     }
 
-    public function destroy(Proposta $proposta)
+    public function destroy(Request $request, Proposta $proposta)
     {
+        $numero = $proposta->numero;
         $proposta->delete();
 
         activity()
+            ->useLog('Propostas')
             ->performedOn($proposta)
             ->causedBy(auth()->user())
-            ->log('Eliminou a proposta.');
+            ->withProperties([
+                'numero' => $numero,
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log("Eliminou a proposta nº {$numero}.");
 
         return redirect()->route('propostas.index')->with('success', 'Proposta eliminada com sucesso.');
     }
 
-    public function download(Proposta $proposta)
+    public function download(Request $request, Proposta $proposta)
     {
         $proposta->load(['cliente', 'linhas.artigo.iva']);
+        $empresa = Empresa::first();
+
+        activity()
+            ->useLog('Propostas')
+            ->performedOn($proposta)
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'numero' => $proposta->numero,
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log("Download do PDF da proposta nº {$proposta->numero}.");
 
         $totalComIva = $proposta->linhas->reduce(function ($carry, $linha) {
             $preco = $linha->quantidade * $linha->preco_unitario;
@@ -181,12 +268,13 @@ class PropostaController extends Controller
             return $carry + ($preco * (1 + ($iva / 100)));
         }, 0);
 
-        $pdf = Pdf::loadView('pdfs.proposta', compact('proposta', 'totalComIva'));
+        $pdf = Pdf::loadView('pdfs.proposta', compact('proposta', 'totalComIva', 'empresa'));
         return $pdf->download("proposta_{$proposta->numero}.pdf");
     }
 
-    public function converter(Proposta $proposta)
+    public function converter(Request $request, Proposta $proposta)
     {
+        $numero = $proposta->numero;
         $proposta = Proposta::with('linhas.artigo.iva', 'linhas.fornecedor', 'cliente')->find($proposta->id);
 
         $total = 0;
@@ -219,9 +307,15 @@ class PropostaController extends Controller
         $proposta->delete();
 
         activity()
+            ->useLog('Propostas')
             ->performedOn($proposta)
             ->causedBy(auth()->user())
-            ->log('Proposta convertida em encomenda.');
+            ->withProperties([
+                'numero' => $numero,
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log("Converteu a proposta nº {$numero} em encomenda.");
 
         return redirect()->route('encomendas.clientes')->with('success', 'Proposta convertida em encomenda.');
     }

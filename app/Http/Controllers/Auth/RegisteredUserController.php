@@ -45,6 +45,8 @@ class RegisteredUserController extends Controller
             'estado' => 'Ativo',
         ]);
 
+        $user->assignRole('Guest');
+
         event(new Registered($user));
 
         Auth::login($user);

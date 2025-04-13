@@ -43,6 +43,9 @@ return [
         'nif' => [
             'unique' => 'Este NIF já está registado.',
         ],
+        'name' => [
+            'unique' => 'Este nome de grupo já existe.',
+        ],
         'referencia' => [
             'unique' => 'Esta referência já está registada.',
         ],

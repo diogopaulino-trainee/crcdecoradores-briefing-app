@@ -25,14 +25,32 @@ class FuncaoController extends Controller
 
         $funcoes = $query->paginate(10)->withQueryString();
 
+        activity()
+            ->useLog('Funções')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log('Acedeu à listagem de funções.');
+
         return Inertia::render('Funcoes/Index', [
             'funcoes' => $funcoes,
             'filtros' => $request->only(['termo', 'sort', 'direction']),
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        activity()
+            ->useLog('Funções')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log('Acedeu ao formulário de criação de função.');
+
         return Inertia::render('Funcoes/Create');
     }
 
@@ -52,16 +70,31 @@ class FuncaoController extends Controller
 
         if ($funcao->wasRecentlyCreated) {
             activity()
+                ->useLog('Funções')
                 ->performedOn($funcao)
                 ->causedBy(auth()->user())
-                ->log('Criou uma função.');
+                ->withProperties([
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ])
+                ->log('Criou a função: ' . $funcao->nome);
         }
 
         return redirect()->route('funcoes.index')->with('success', 'Função criada com sucesso.');
     }
 
-    public function edit(Funcao $funcao)
+    public function edit(Request $request, Funcao $funcao)
     {
+        activity()
+            ->useLog('Funções')
+            ->performedOn($funcao)
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log('Acedeu à edição da função: ' . $funcao->nome);
+
         return Inertia::render('Funcoes/Edit', [
             'funcao' => $funcao,
         ]);
@@ -79,6 +112,16 @@ class FuncaoController extends Controller
         $funcao->update($validated);
 
         activity()
+            ->useLog('Funções')
+            ->performedOn($funcao)
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log('Atualizou a função: ' . $funcao->nome);
+
+        activity()
             ->performedOn($funcao)
             ->causedBy(auth()->user())
             ->log('Atualizou a função.');
@@ -88,12 +131,19 @@ class FuncaoController extends Controller
 
     public function destroy(Funcao $funcao)
     {
+        $nome = $funcao->nome;
+        
         $funcao->delete();
 
         activity()
+            ->useLog('Funções')
             ->performedOn($funcao)
             ->causedBy(auth()->user())
-            ->log('Eliminou a função.');
+            ->withProperties([
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log('Eliminou a função: ' . $nome);
 
         return redirect()->route('funcoes.index')->with('success', 'Função eliminada com sucesso.');
     }

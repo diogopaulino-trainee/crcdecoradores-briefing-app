@@ -22,7 +22,13 @@
     <table class="no-border">
         <tr class="no-border">
             <td class="no-border">
-                <img src="{{ storage_path('app/private/logo_crc.png') }}" class="logo" alt="Logo CRC">
+                <img
+                    src="{{ $empresa && $empresa->logotipo && file_exists(storage_path('app/private/' . $empresa->logotipo))
+                        ? storage_path('app/private/' . $empresa->logotipo)
+                        : public_path('logos/logo_crc.png') }}"
+                    class="logo"
+                    alt="Logo da empresa"
+                />
             </td>
             <td class="no-border title">
                 {{ strtoupper($encomenda->tipo) === 'FORNECEDOR' ? 'ENCOMENDA A FORNECEDOR' : 'ENCOMENDA A CLIENTE' }}<br>
@@ -37,10 +43,15 @@
     <table class="mt-2">
         <tr>
             <td style="width: 50%; border: none;">
-                <strong>R. C. SANCHES II, LDA</strong><br>
-                Avenida D. João II, 30  2.º A<br>
-                LISBOA<br>
-                1990-092 LISBOA
+                @if ($empresa)
+                    <strong>{{ $empresa->nome }}</strong><br>
+                    {{ $empresa->morada }}<br>
+                    {{ $empresa->codigo_postal }} {{ $empresa->localidade }}<br>
+                    NIF: {{ $empresa->numero_contribuinte }}
+                @else
+                    <strong>Empresa</strong><br>
+                    Dados não disponíveis
+                @endif
             </td>
             <td style="width: 50%; border: none; text-align: right;">
                 @if ($encomenda->estado === 'Fechado')

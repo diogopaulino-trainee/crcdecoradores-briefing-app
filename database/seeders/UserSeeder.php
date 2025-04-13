@@ -52,6 +52,13 @@ class UserSeeder extends Seeder
                 'estado' => 'Ativo',
                 'role' => $gestor,
             ],
+            [
+                'name' => 'Utilizador Teste',
+                'email' => 'teste@example.com',
+                'telemovel' => '900000000',
+                'estado' => 'Ativo',
+                'role' => Role::where('name', 'Teste')->first(),
+            ],
         ];
 
         foreach ($users as $userData) {

@@ -2,10 +2,14 @@
 
 namespace App\Providers;
 
+use App\Models\Empresa;
+use App\Models\Role;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
+use Spatie\Permission\PermissionRegistrar;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,13 +26,22 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Força o uso de HTTPS em todas as URLs
+        app(PermissionRegistrar::class)->setRoleClass(Role::class);
+        
         URL::forceScheme('https');
-
-        // Configura o prefetch do Vite com uma concorrência de 3
         Vite::prefetch(concurrency: 3);
 
-        // Partilha dados globais com o Inertia
+        $empresa = \Illuminate\Support\Facades\Schema::hasTable('empresa') ? \App\Models\Empresa::first() : null;
+        $defaultLogoPath = asset('logos/logo_crc.png');
+
+        $logoPath = $empresa && $empresa->logotipo
+            ? url('/empresa/logotipo')
+            : $defaultLogoPath;
+
+        View::composer('*', function ($view) use ($logoPath) {
+            $view->with('logotipoEmpresa', $logoPath);
+        });
+
         Inertia::share([
             'csrf_token' => fn () => csrf_token(),
             'auth' => fn () => [
@@ -41,6 +54,7 @@ class AppServiceProvider extends ServiceProvider
                     ])
                     : null,
             ],
+            'logotipoEmpresa' => fn () => $logoPath,
         ]);
     }
 }

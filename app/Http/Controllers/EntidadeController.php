@@ -68,6 +68,16 @@ class EntidadeController extends Controller
 
         $filtros = $request->only(['nome', 'nif', 'email', 'estado', 'consentimento_rgpd', 'pais_id', 'sort', 'direction']);
 
+        activity()
+            ->useLog('Entidades')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'tipo' => $tipo ?? 'todos',
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log('Listou entidades do tipo ' . ($tipo ?? 'todos') . '.');
+
         return Inertia::render('Entidades/Index', [
             'entidades' => $entidades,
             'filtro' => $tipo ?? 'todos',
@@ -80,6 +90,16 @@ class EntidadeController extends Controller
     {
         $entidade->load('pais');
 
+        activity()
+            ->useLog('Entidades')
+            ->performedOn($entidade)
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log('Visualizou os detalhes da entidade.');
+
         return Inertia::render('Entidades/Show', [
             'entidade' => $entidade,
         ]);
@@ -90,6 +110,16 @@ class EntidadeController extends Controller
         $paises = Pais::all();
         $ultimoNumero = Entidade::max('numero') ?? 0;
         $proximoNumero = $ultimoNumero + 1;
+
+        activity()
+            ->useLog('Entidades')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'tipo' => $request->input('tipo', 'cliente'),
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log('Acedeu ao formulário de criação de entidade.');
 
         return Inertia::render('Entidades/Create', [
             'tipo' => $request->input('tipo', 'cliente'),
@@ -111,7 +141,7 @@ class EntidadeController extends Controller
             'telemovel' => ['required', 'string', 'max:20'],
             'website' => ['required', 'url'],
             'email' => ['required', 'email', 'unique:entidades,email'],
-            'consentimento_rgpd' => ['required', 'in:sim,nao'],
+            'consentimento_rgpd' => ['required', 'in:Sim,Não'],
             'observacoes' => ['nullable', 'string'],
             'estado' => ['required', 'in:Ativo,Inativo'],
         ]);
@@ -162,11 +192,15 @@ class EntidadeController extends Controller
             'consentimento_rgpd', 'observacoes', 'estado'
         ]));
 
-        // Registra a atividade de criação da entidade
         activity()
+            ->useLog('Entidades')
             ->performedOn($entidade)
             ->causedBy(auth()->user())
-            ->withProperties(['tipo' => $entidade->tipo])
+            ->withProperties([
+                'tipo' => $entidade->tipo,
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
             ->log('Criou uma entidade' . (!$nifValidoVies ? ' (sem validação VIES)' : ' com validação VIES.'));
 
         // Redireciona para a rota apropriada
@@ -179,6 +213,16 @@ class EntidadeController extends Controller
     public function edit(Entidade $entidade)
     {
         $paises = Pais::select('id', 'nome')->orderBy('nome')->get();
+
+        activity()
+        ->useLog('Entidades')
+        ->causedBy(auth()->user())
+        ->performedOn($entidade)
+        ->withProperties([
+            'ip' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ])
+        ->log('Acedeu à edição da entidade: ' . $entidade->nome . ' (Nº ' . $entidade->numero . ')');
 
         return Inertia::render('Entidades/Edit', [
             'entidade' => $entidade,
@@ -199,7 +243,7 @@ class EntidadeController extends Controller
             'telemovel' => ['required', 'string', 'max:20'],
             'website' => ['required', 'url'],
             'email' => ['required', 'email', 'unique:entidades,email,' . $entidade->id],
-            'consentimento_rgpd' => ['required', 'in:sim,nao'],
+            'consentimento_rgpd' => ['required', 'in:Sim,Não'],
             'observacoes' => ['nullable', 'string'],
             'estado' => ['required', 'in:Ativo,Inativo'],
         ]);
@@ -238,7 +282,6 @@ class EntidadeController extends Controller
             'nif_hash' => $nifHash,
         ]);
 
-        // Atualiza a entidade
         $entidade->update($request->only([
             'tipo',
             'numero',
@@ -257,13 +300,16 @@ class EntidadeController extends Controller
             'estado',
         ]));
 
-        // Registra a atividade
         activity()
+            ->useLog('Entidades')
             ->performedOn($entidade)
             ->causedBy(auth()->user())
-            ->log('Atualizou a entidade.');
+            ->withProperties([
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log('Atualizou a entidade: ' . $entidade->nome . ' (Nº ' . $entidade->numero . ')');
 
-        // Redireciona de volta para a lista correta, dependendo do tipo de entidade
         if ($entidade->tipo === 'cliente') {
             return redirect()->route('clientes.index')->with('success', 'Entidade atualizada com sucesso.');
         } elseif ($entidade->tipo === 'fornecedor') {
@@ -279,9 +325,14 @@ class EntidadeController extends Controller
         $entidade->delete();
 
         activity()
+            ->useLog('Entidades')
             ->performedOn($entidade)
             ->causedBy(auth()->user())
-            ->log('Eliminou a entidade.');
+            ->withProperties([
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+        ->log('Eliminou a entidade: ' . $entidade->nome . ' (Nº ' . $entidade->numero . ')');
 
         return redirect()->route($tipo === 'cliente' ? 'clientes.index' : 'fornecedores.index')
             ->with('success', 'Entidade eliminada com sucesso.');

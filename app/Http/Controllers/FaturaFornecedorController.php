@@ -35,6 +35,15 @@ class FaturaFornecedorController extends Controller
 
         $faturas = $query->paginate(10)->withQueryString();
 
+        activity()
+            ->useLog('Faturas Fornecedores')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log('Listou faturas de fornecedor.');
+
         return Inertia::render('FaturasFornecedores/Index', [
             'faturas' => $faturas,
             'filtros' => $request->only(['termo', 'estado', 'sort', 'direction']),
@@ -56,6 +65,15 @@ class FaturaFornecedorController extends Controller
         });
 
         $proximoNumero = FaturaFornecedor::max('numero') + 1 ?? 1;
+
+        activity()
+            ->useLog('Faturas Fornecedores')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log('Acedeu ao formulário de criação de fatura de fornecedor.');
 
         return Inertia::render('FaturasFornecedores/Create', [
             'fornecedores' => $fornecedores,
@@ -103,7 +121,18 @@ class FaturaFornecedorController extends Controller
             Mail::to($fatura->fornecedor->email)->send(new ComprovativoPagamentoFornecedor($fatura));
         }
 
-        activity()->performedOn($fatura)->causedBy(auth()->user())->log('Criou uma fatura de fornecedor.');
+        activity()
+            ->useLog('Faturas Fornecedores')
+            ->performedOn($fatura)
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'numero' => $fatura->numero,
+                'estado' => $fatura->estado,
+                'valor_total' => $fatura->valor_total,
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log('Criou a fatura do fornecedor nº ' . $fatura->numero . ' (Estado: ' . $fatura->estado . ', Total: ' . number_format($fatura->valor_total, 2, ',', '.') . ' €)');
 
         return redirect()->route('faturas.index')->with('success', 'Fatura do fornecedor criada com sucesso.');
     }
@@ -123,6 +152,17 @@ class FaturaFornecedorController extends Controller
                 'valor_total' => $encomenda->valor_total,
             ];
         });
+
+        activity()
+            ->useLog('Faturas Fornecedores')
+            ->performedOn($faturaFornecedor)
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'numero' => $faturaFornecedor->numero,
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log('Acedeu à edição da fatura do fornecedor nº ' . $faturaFornecedor->numero);
 
         return Inertia::render('FaturasFornecedores/Edit', [
             'fatura' => [
@@ -212,7 +252,18 @@ class FaturaFornecedorController extends Controller
             Mail::to($faturaFornecedor->fornecedor->email)->send(new ComprovativoPagamentoFornecedor($faturaFornecedor));
         }
 
-        activity()->performedOn($faturaFornecedor)->causedBy(auth()->user())->log('Atualizou a fatura do fornecedor.');
+    activity()
+        ->useLog('Faturas Fornecedores')
+        ->performedOn($faturaFornecedor)
+        ->causedBy(auth()->user())
+        ->withProperties([
+            'numero' => $faturaFornecedor->numero,
+            'estado' => $faturaFornecedor->estado,
+            'valor_total' => $faturaFornecedor->valor_total,
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ])
+        ->log('Atualizou a fatura do fornecedor nº ' . $faturaFornecedor->numero . ' (' . $faturaFornecedor->estado . ') no valor de ' . number_format($faturaFornecedor->valor_total, 2, ',', '.') . '€.');
 
         Log::info('[Fatura Update] Update finalizado com sucesso');
 
@@ -226,6 +277,17 @@ class FaturaFornecedorController extends Controller
             'encomendaFornecedor.fornecedorEncomenda',
         ])->findOrFail($id);
 
+        activity()
+            ->useLog('Faturas Fornecedores')
+            ->performedOn($faturaFornecedor)
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'numero' => $faturaFornecedor->numero,
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log('Visualizou a fatura do fornecedor nº ' . $faturaFornecedor->numero . '.');
+
         return Inertia::render('FaturasFornecedores/Show', [
             'fatura' => $faturaFornecedor,
         ]);
@@ -233,9 +295,19 @@ class FaturaFornecedorController extends Controller
 
     public function destroy(FaturaFornecedor $faturaFornecedor)
     {
+        $numero = $faturaFornecedor->numero;
         $faturaFornecedor->delete();
 
-        activity()->performedOn($faturaFornecedor)->causedBy(auth()->user())->log('Eliminou a fatura do fornecedor.');
+        activity()
+            ->useLog('Faturas Fornecedores')
+            ->performedOn($faturaFornecedor)
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'numero' => $numero,
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log('Eliminou a fatura do fornecedor nº ' . $numero . '.');
 
         return redirect()->route('faturas.index')->with('success', 'Fatura eliminada com sucesso.');
     }

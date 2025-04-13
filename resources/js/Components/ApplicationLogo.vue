@@ -1,3 +1,3 @@
 <template>
-    <img src="/images/logo_crc-removebg.png" alt="Logo CRCDecoradores" class="mx-auto h-28 object-contain" />
+    <img :src="String($page.props.logotipoEmpresa)" alt="Logo CRCDecoradores" class="mx-auto max-h-28 object-contain" />
 </template>

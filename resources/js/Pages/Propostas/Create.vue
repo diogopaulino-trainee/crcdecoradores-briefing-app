@@ -22,7 +22,6 @@ const props = defineProps({
 
 const today = new Date();
 const form = useForm({
-    numero: props.proximoNumero,
     data_da_proposta: today.toISOString().substring(0, 10),
     validade: '',
     cliente_id: '',
@@ -76,15 +75,15 @@ const submit = () => {
             <h2 class="text-2xl font-bold text-[#CDAA62]">Criar Nova Proposta</h2>
 
             <FormWithProvide :form="form" @submit.prevent="submit" class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <FormField name="numero">
-                    <FormItem>
-                        <FormLabel>Número</FormLabel>
-                        <FormControl>
-                            <Input v-model="form.numero" id="numero" readonly />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                </FormField>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Número</label>
+                    <input
+                        type="text"
+                        :value="props.proximoNumero"
+                        class="mt-1 w-full cursor-not-allowed rounded border bg-gray-100 px-3 py-2"
+                        readonly
+                    />
+                </div>
 
                 <FormField name="cliente_id">
                     <FormItem>

@@ -22,7 +22,7 @@ class ComprovativoPagamentoFornecedor extends Mailable
     {
         $email = $this
             ->subject('Comprovativo de Pagamento - Fatura ' . $this->fatura->numero)
-            ->markdown('emails.comprovativo-fornecedor')
+            ->view('emails.comprovativo-fornecedor')
             ->with([
                 'fornecedor' => $this->fatura->fornecedor,
                 'fatura' => $this->fatura,

@@ -42,6 +42,15 @@ class ArtigoController extends Controller
 
         $artigos = $query->paginate(10)->withQueryString();
 
+        activity()
+            ->useLog('Artigos')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log('Acedeu à listagem de artigos.');
+
         return Inertia::render('Artigos/Index', [
             'artigos' => $artigos,
             'filtros' => $request->only(['termo', 'preco', 'iva_id', 'estado', 'sort', 'direction']),
@@ -51,6 +60,16 @@ class ArtigoController extends Controller
 
     public function show(Artigo $artigo)
     {
+        activity()
+            ->useLog('Artigos')
+            ->performedOn($artigo)
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log("Visualizou o artigo: {$artigo->referencia}");
+
         return Inertia::render('Artigos/Show', [
             'artigo' => $artigo->load('iva'),
         ]);
@@ -58,6 +77,15 @@ class ArtigoController extends Controller
 
     public function create()
     {
+        activity()
+            ->useLog('Artigos')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log('Acedeu ao formulário de criação de artigo.');
+
         return Inertia::render('Artigos/Create', [
             'ivas' => Iva::all(),
         ]);
@@ -94,15 +122,30 @@ class ArtigoController extends Controller
         ]);
 
         activity()
+            ->useLog('Artigos')
             ->performedOn($artigo)
             ->causedBy(auth()->user())
-            ->log('Criou um artigo.');
+            ->withProperties([
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log('Criou o artigo: ' . $artigo->referencia);
 
         return redirect()->route('artigos.index')->with('success', 'Artigo criado com sucesso.');
     }
 
     public function edit(Artigo $artigo)
     {
+        activity()
+            ->useLog('Artigos')
+            ->performedOn($artigo)
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log('Acedeu à edição do artigo: ' . $artigo->referencia);
+
         return Inertia::render('Artigos/Edit', [
             'artigo' => $artigo,
             'ivas' => Iva::all(),
@@ -140,9 +183,14 @@ class ArtigoController extends Controller
         ]);
 
         activity()
+            ->useLog('Artigos')
             ->performedOn($artigo)
             ->causedBy(auth()->user())
-            ->log('Atualizou o artigo.');
+            ->withProperties([
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log('Atualizou o artigo: ' . $artigo->referencia);
 
         return redirect()->route('artigos.index')->with('success', 'Artigo atualizado com sucesso.');
     }
@@ -152,9 +200,14 @@ class ArtigoController extends Controller
         $artigo->delete();
 
         activity()
+            ->useLog('Artigos')
             ->performedOn($artigo)
             ->causedBy(auth()->user())
-            ->log('Eliminou o artigo.');
+            ->withProperties([
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log('Eliminou o artigo: ' . $artigo->referencia);
 
         return redirect()->route('artigos.index')->with('success', 'Artigo eliminado com sucesso.');
     }

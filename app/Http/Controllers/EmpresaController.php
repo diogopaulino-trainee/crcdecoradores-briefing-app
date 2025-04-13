@@ -13,16 +13,16 @@ class EmpresaController extends Controller
     {
         $empresa = Empresa::first();
 
+        activity()
+            ->useLog('Empresa')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log('Acedeu à página de dados da empresa.');
+
         return Inertia::render('Empresa/Index', [
-            'empresa' => $empresa,
-        ]);
-    }
-
-    public function edit()
-    {
-        $empresa = Empresa::first();
-
-        return Inertia::render('Empresa/Edit', [
             'empresa' => $empresa,
         ]);
     }
@@ -32,25 +32,36 @@ class EmpresaController extends Controller
         $empresa = Empresa::first();
 
         $data = $request->validate([
-            'nome' => 'required',
-            'morada' => 'nullable',
-            'codigo_postal' => 'nullable',
-            'localidade' => 'nullable',
-            'numero_contribuinte' => 'nullable',
+            'nome' => 'required|string|max:255',
+            'morada' => 'nullable|string|max:255',
+            'codigo_postal' => 'nullable|string|max:20',
+            'localidade' => 'nullable|string|max:255',
+            'numero_contribuinte' => 'nullable|string|max:20',
             'logotipo' => 'nullable|image|max:2048',
         ]);
 
         if ($request->hasFile('logotipo')) {
+            if ($empresa->logotipo && Storage::disk('private')->exists($empresa->logotipo)) {
+                Storage::disk('private')->delete($empresa->logotipo);
+            }
+
             $data['logotipo'] = $request->file('logotipo')->store('logos', 'private');
+        } else {
+            unset($data['logotipo']);
         }
 
         $empresa->update($data);
 
         activity()
+            ->useLog('Empresa')
             ->performedOn($empresa)
             ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
             ->log('Atualizou os dados da empresa.');
 
-        return redirect()->route('empresas.index')->with('success', 'Dados da empresa atualizados com sucesso.');
+        return redirect()->route('empresa.index')->with('success', 'Dados da empresa atualizados com sucesso.');
     }
 }

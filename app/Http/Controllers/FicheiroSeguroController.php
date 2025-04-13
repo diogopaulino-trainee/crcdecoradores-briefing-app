@@ -18,6 +18,16 @@ class FicheiroSeguroController extends Controller
             abort(404, 'Ficheiro não encontrado.');
         }
 
+        activity()
+            ->useLog('Ficheiros Seguros')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ficheiro' => $caminho,
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log('Acedeu ao ficheiro seguro: ' . $caminho);
+
         // Serve o ficheiro diretamente
         return response()->file(storage_path('app/private/' . $caminho));
     }

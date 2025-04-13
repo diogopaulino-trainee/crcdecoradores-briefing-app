@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Artigo;
+use App\Models\Empresa;
 use App\Models\Encomenda;
 use App\Models\Entidade;
 use App\Models\Proposta;
@@ -11,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use Throwable;
 
 class EncomendaController extends Controller
 {
@@ -28,6 +30,16 @@ class EncomendaController extends Controller
             ->orderBy($sort, $direction)
             ->paginate(10)
             ->withQueryString();
+
+        activity()
+            ->useLog('Encomendas')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'filtros' => $request->all(),
+            ])
+            ->log('Acedeu à listagem de encomendas (' . ($request->route()->getName() ?? 'todas') . ').');
 
         return Inertia::render('Encomendas/Index', [
             'encomendas' => $encomendas,
@@ -53,6 +65,16 @@ class EncomendaController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        activity()
+            ->useLog('Encomendas')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'filtros' => $request->all(),
+            ])
+            ->log('Acedeu à listagem de encomendas (' . ($request->route()->getName() ?? 'todas') . ').');
+
         return Inertia::render('Encomendas/Index', [
             'encomendas' => $encomendas,
             'filtro' => 'clientes',
@@ -77,6 +99,16 @@ class EncomendaController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        activity()
+            ->useLog('Encomendas')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'filtros' => $request->all(),
+            ])
+            ->log('Acedeu à listagem de encomendas (' . ($request->route()->getName() ?? 'todas') . ').');
+
         return Inertia::render('Encomendas/Index', [
             'encomendas' => $encomendas,
             'filtro' => 'fornecedores',
@@ -91,6 +123,16 @@ class EncomendaController extends Controller
         $clientes = Entidade::where('tipo', 'cliente')->get();
         $fornecedores = Entidade::where('tipo', 'fornecedor')->get();
         $proximoNumero = (Encomenda::max('numero') ?? 2000) + 1;
+
+        activity()
+            ->useLog('Encomendas')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'tipo' => $request->query('tipo'),
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log('Acedeu ao formulário de criação de encomenda (' . ucfirst($request->query('tipo', 'cliente')) . ').');
 
         return Inertia::render('Encomendas/Create', [
             'tipo' => $tipo,
@@ -139,13 +181,21 @@ class EncomendaController extends Controller
             DB::commit();
 
             activity()
+                ->useLog('Encomendas')
                 ->performedOn($encomenda)
                 ->causedBy(auth()->user())
-                ->log('Criou uma encomenda.');
+                ->withProperties([
+                    'numero' => $encomenda->numero,
+                    'tipo' => $encomenda->tipo,
+                    'valor_total' => $encomenda->valor_total,
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ])
+                ->log('Criou a encomenda Nº ' . $encomenda->numero . ' para ' . optional($encomenda->cliente)->nome . ' (' . ucfirst($encomenda->tipo) . ').');
 
             return $this->redirecionarParaIndexPorTipo($encomenda)
                 ->with('success', 'Encomenda criada com sucesso.');
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
             report($e);
             return redirect()->back()->withErrors('Erro ao criar a encomenda.')->withInput();
@@ -167,6 +217,17 @@ class EncomendaController extends Controller
         if ($encomenda->cliente && !$clientes->contains('id', $encomenda->cliente->id)) {
             $clientes->push($encomenda->cliente);
         }
+
+        activity()
+            ->useLog('Encomendas')
+            ->performedOn($encomenda)
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'numero' => $encomenda->numero,
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log('Acedeu à edição da encomenda Nº ' . $encomenda->numero . ' de ' . optional($encomenda->cliente)->nome . ' (' . ucfirst($encomenda->tipo) . ').');
 
         return Inertia::render('Encomendas/Edit', [
             'encomenda' => $encomenda,
@@ -224,9 +285,17 @@ class EncomendaController extends Controller
         $encomenda->update(['valor_total' => $total]);
 
         activity()
+            ->useLog('Encomendas')
             ->performedOn($encomenda)
             ->causedBy(auth()->user())
-            ->log('Atualizou a encomenda.');
+            ->withProperties([
+                'numero' => $encomenda->numero,
+                'tipo' => $encomenda->tipo,
+                'valor_total' => $encomenda->valor_total,
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log('Atualizou a encomenda Nº ' . $encomenda->numero . ' de ' . optional($encomenda->cliente)->nome . ' (' . ucfirst($encomenda->tipo) . ').');
 
         return $this->redirecionarParaIndexPorTipo($encomenda)
             ->with('success', 'Encomenda atualizada com sucesso.');
@@ -250,6 +319,17 @@ class EncomendaController extends Controller
     {
         $encomenda->load('cliente', 'linhas.artigo.iva');
 
+        activity()
+            ->useLog('Encomendas')
+            ->performedOn($encomenda)
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'numero' => $encomenda->numero,
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log("Visualizou os detalhes da encomenda nº {$encomenda->numero}.");
+
         return Inertia::render('Encomendas/Show', [
             'encomenda' => $encomenda,
         ]);
@@ -258,8 +338,20 @@ class EncomendaController extends Controller
     public function download(Encomenda $encomenda)
     {
         $encomenda->load(['cliente', 'linhas.artigo.iva']);
+        $empresa = Empresa::first();
 
-        $pdf = Pdf::loadView('pdfs.encomenda', compact('encomenda'));
+        activity()
+            ->useLog('Encomendas')
+            ->performedOn($encomenda)
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'numero' => $encomenda->numero,
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log("Descarregou o PDF da encomenda nº {$encomenda->numero}.");
+
+        $pdf = Pdf::loadView('pdfs.encomenda', compact('encomenda', 'empresa'));
 
         return $pdf->download("encomenda_{$encomenda->numero}.pdf");
     }
@@ -317,13 +409,21 @@ class EncomendaController extends Controller
                 ]);
             }
         }
+        $tipo = optional($encomenda->cliente)->tipo;
+        $numero = $encomenda->numero;
 
         $encomenda->delete();
 
         activity()
+            ->useLog('Encomendas')
             ->performedOn($encomenda)
             ->causedBy(auth()->user())
-            ->log('Encomenda de cliente convertida e eliminada após conversão para fornecedores.');
+            ->withProperties([
+                'numero' => $numero,
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log("Convertida e eliminada encomenda cliente nº {$numero} para encomendas por fornecedor.");
 
         return redirect()->route('encomendas.fornecedores')->with('success', 'Conversão realizada com sucesso.');
     }

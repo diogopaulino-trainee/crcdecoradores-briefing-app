@@ -17,7 +17,6 @@ const props = defineProps({
 });
 
 const form = useForm({
-    numero: props.proximoNumero,
     data_da_ordem: new Date().toISOString().substr(0, 10),
     entidade_id: '',
     descricao: '',
@@ -45,15 +44,15 @@ const submit = () => {
         <div class="mx-auto max-w-3xl space-y-6 rounded bg-white p-8 shadow">
             <h2 class="text-2xl font-bold text-[#CDAA62]">Criar Nova Ordem de Trabalho</h2>
 
-            <FormField name="numero">
-                <FormItem>
-                    <FormLabel>Número</FormLabel>
-                    <FormControl>
-                        <Input v-model="form.numero" id="numero" readonly />
-                    </FormControl>
-                    <FormMessage>{{ form.errors.numero }}</FormMessage>
-                </FormItem>
-            </FormField>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Número</label>
+                <input
+                    type="text"
+                    :value="props.proximoNumero"
+                    class="mt-1 w-full cursor-not-allowed rounded border bg-gray-100 px-3 py-2"
+                    readonly
+                />
+            </div>
 
             <FormWithProvide :form="form" @submit.prevent="submit" class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormField name="data_da_ordem">

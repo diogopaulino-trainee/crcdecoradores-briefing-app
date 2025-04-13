@@ -20,6 +20,15 @@ class ProfileController extends Controller
     {
         $user = $request->user()->load('roles');
 
+        activity()
+            ->useLog('Perfil')
+            ->causedBy($user)
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log("Acedeu à página de edição do perfil.");
+
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => session('status'),
@@ -39,13 +48,29 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $originalEmail = $user->email;
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $user->fill($request->validated());
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        $user->save();
+
+        activity()
+            ->useLog('Perfil')
+            ->causedBy($user)
+            ->withProperties([
+                'nome' => $user->name,
+                'email_antigo' => $originalEmail,
+                'email_novo' => $user->email,
+                'telemovel' => $user->telemovel,
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log("Atualizou os dados do perfil.");
 
         return Redirect::route('profile.edit');
     }
@@ -60,6 +85,19 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+        $userId = $user->id;
+        $userEmail = $user->email;
+
+        activity()
+            ->useLog('Perfil')
+            ->causedBy($user)
+            ->withProperties([
+                'id' => $userId,
+                'email' => $userEmail,
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log("Eliminou a sua conta.");
 
         Auth::logout();
 

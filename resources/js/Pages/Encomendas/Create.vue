@@ -84,6 +84,13 @@ const submit = () => {
         preserveScroll: true,
         onSuccess: () => {
             toast.success('Encomenda criada com sucesso!');
+            if (props.tipo === 'clientes') {
+                router.visit(route('encomendas.clientes'));
+            } else if (props.tipo === 'fornecedores') {
+                router.visit(route('encomendas.fornecedores'));
+            } else {
+                router.visit(route('encomendas.index'));
+            }
         },
         onError: () => {
             toast.error('Erro ao criar a encomenda.');
@@ -102,15 +109,15 @@ const numeroGerado = ref(props.proximoNumero);
 
             <FormWithProvide :form="form" @submit.prevent="submit" class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <!-- Número -->
-                <FormField name="numero">
-                    <FormItem>
-                        <FormLabel>Número</FormLabel>
-                        <FormControl>
-                            <Input v-model="numeroGerado" readonly />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                </FormField>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Número</label>
+                    <input
+                        type="text"
+                        :value="props.proximoNumero"
+                        class="mt-1 w-full cursor-not-allowed rounded border bg-gray-100 px-3 py-2"
+                        readonly
+                    />
+                </div>
 
                 <!-- Cliente -->
                 <FormField name="cliente_id">

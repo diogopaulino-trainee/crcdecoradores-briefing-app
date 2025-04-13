@@ -52,6 +52,15 @@ class ContactoController extends Controller
         // Filtros para o frontend
         $filtros = $request->only(['nome', 'entidade_id', 'estado', 'consentimento_rgpd', 'sort', 'direction']);
 
+        activity()
+            ->useLog('Contactos')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ])
+            ->log('Acedeu à listagem de contactos.');
+
         return Inertia::render('Contactos/Index', [
             'contactos' => $contactos,
             'filtros' => $filtros,
@@ -63,6 +72,16 @@ class ContactoController extends Controller
     {
         $contacto->load('entidade');
 
+        activity()
+            ->useLog('Contactos')
+            ->performedOn($contacto)
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log('Visualizou o contacto: ' . $contacto->primeiro_nome . ' ' . $contacto->apelido);
+
         return Inertia::render('Contactos/Show', [
             'contacto' => $contacto,
         ]);
@@ -71,6 +90,15 @@ class ContactoController extends Controller
     public function create()
     {
         $proximoNumero = (Contacto::max('numero') ?? 0) + 1;
+
+        activity()
+            ->useLog('Contactos')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log('Acedeu ao formulário de criação de contacto.');
 
         return Inertia::render('Contactos/Create', [
             'entidades' => Entidade::all(),
@@ -88,7 +116,7 @@ class ContactoController extends Controller
             'telefone' => ['required', 'string', 'max:50'],
             'telemovel' => ['required', 'string', 'max:50'],
             'email' => ['required', 'email', 'max:255', 'unique:contactos,email'],
-            'consentimento_rgpd' => ['required', 'in:sim,nao'],
+            'consentimento_rgpd' => ['required', 'in:Sim,Não'],
             'observacoes' => ['nullable', 'string'],
             'estado' => ['required', 'in:Ativo,Inativo'],
         ]);
@@ -99,16 +127,31 @@ class ContactoController extends Controller
         $contacto = Contacto::create($validated);
 
         activity()
+            ->useLog('Contactos')
             ->performedOn($contacto)
             ->causedBy(auth()->user())
-            ->withProperties(['entidade' => $contacto->entidade_id])
-            ->log('Criou um contacto.');
+            ->withProperties([
+                'entidade' => $contacto->entidade_id,
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log('Criou o contacto: ' . $contacto->primeiro_nome . ' ' . $contacto->apelido);
 
         return redirect()->route('contactos.index')->with('success', 'Contacto criado com sucesso.');
     }
 
     public function edit(Contacto $contacto)
     {
+        activity()
+            ->useLog('Contactos')
+            ->performedOn($contacto)
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log('Acedeu à edição do contacto: ' . $contacto->primeiro_nome . ' ' . $contacto->apelido);
+
         return Inertia::render('Contactos/Edit', [
             'contacto' => $contacto,
             'entidades' => Entidade::all(),
@@ -130,7 +173,7 @@ class ContactoController extends Controller
                 'max:255',
                 Rule::unique('contactos', 'email')->ignore($contacto->id),
             ],
-            'consentimento_rgpd' => ['required', 'in:sim,nao'],
+            'consentimento_rgpd' => ['required', 'in:Sim,Não'],
             'observacoes' => ['nullable', 'string'],
             'estado' => ['required', 'in:Ativo,Inativo'],
         ]);
@@ -138,22 +181,32 @@ class ContactoController extends Controller
         $contacto->update($validated);
 
         activity()
+            ->useLog('Contactos')
             ->performedOn($contacto)
             ->causedBy(auth()->user())
-            ->withProperties(['entidade' => $contacto->entidade_id])
-            ->log('Atualizou o contacto.');
+            ->withProperties([
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log('Atualizou o contacto: ' . $contacto->primeiro_nome . ' ' . $contacto->apelido);
 
         return redirect()->route('contactos.index')->with('success', 'Contacto atualizado com sucesso.');
     }
 
     public function destroy(Contacto $contacto)
     {
+        $nome = $contacto->primeiro_nome . ' ' . $contacto->apelido;
         $contacto->delete();
 
         activity()
+            ->useLog('Contactos')
             ->performedOn($contacto)
             ->causedBy(auth()->user())
-            ->log('Eliminou o contacto.');
+            ->withProperties([
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ])
+            ->log('Eliminou o contacto: ' . $nome);
 
         return redirect()->route('contactos.index')->with('success', 'Contacto eliminado com sucesso.');
     }
