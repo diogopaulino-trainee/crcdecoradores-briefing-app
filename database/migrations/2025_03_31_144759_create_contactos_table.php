@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('entidade_id')->constrained('entidades')->onDelete('cascade');
             $table->string('primeiro_nome');
             $table->string('apelido');
-            $table->string('funcao')->nullable();
+            $table->foreignId('funcao_id')->nullable()->constrained('funcoes')->onDelete('set null');
             $table->string('telefone')->nullable();
             $table->string('telemovel')->nullable();
             $table->string('email')->nullable();

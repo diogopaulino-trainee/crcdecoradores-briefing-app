@@ -38,13 +38,6 @@ class SeederGeral extends Seeder
         $grecia = Pais::create(['nome' => 'Grécia', 'codigo' => 'GR']);
         
 
-        // Funções
-        Funcao::insert([
-            ['nome' => 'Administrador', 'descricao' => 'Acesso total ao sistema'],
-            ['nome' => 'Gestor', 'descricao' => 'Responsável pela gestão de operações'],
-            ['nome' => 'Colaborador', 'descricao' => 'Acesso limitado'],
-        ]);
-
         // IVAs
         Iva::create([
             'nome' => 'IVA 23%',
@@ -66,6 +59,11 @@ class SeederGeral extends Seeder
         $iva0 = Iva::where('percentagem', 0)->first();
 
         $ivas = [$iva23, $iva6, $iva0];
+
+        // Criar Funções
+        $adminFuncao = Funcao::create(['nome' => 'Administrador', 'descricao' => 'Acesso total ao sistema']);
+        $gestorFuncao = Funcao::create(['nome' => 'Gestor', 'descricao' => 'Responsável pela gestão de operações']);
+        $responsavelFuncao = Funcao::create(['nome' => 'Responsável', 'descricao' => 'Responsável por área específica']);
 
         // Entidades
         $cliente = null;
@@ -92,14 +90,14 @@ class SeederGeral extends Seeder
                 'estado' => $i % 2 === 0 ? 'Ativo' : 'Inativo',
             ]);
 
-            // Criar 2 contactos por cliente
+            // Criar 2 contactos por cliente, associando a função de "Gestor"
             for ($j = 1; $j <= 2; $j++) {
                 Contacto::create([
                     'numero' => $numeroContacto++,
                     'entidade_id' => $cliente->id,
                     'primeiro_nome' => "Contacto$j",
                     'apelido' => "Cliente$i",
-                    'funcao' => 'Gestor',
+                    'funcao_id' => $gestorFuncao->id,
                     'telefone' => '222111999',
                     'telemovel' => '919999888',
                     'email' => "contacto$j.cliente$i@exemplo.com",
@@ -109,7 +107,7 @@ class SeederGeral extends Seeder
                 ]);
             }
         }
-        
+
         $fornecedor = null;
         $ultimoNumero = Entidade::max('numero') ?? 0;
 
@@ -135,14 +133,14 @@ class SeederGeral extends Seeder
                 'estado' => $i % 3 === 0 ? 'Inativo' : 'Ativo',
             ]);
 
-            // Criar 2 contactos por fornecedor
+            // Criar 2 contactos por fornecedor, associando a função de "Responsável"
             for ($j = 1; $j <= 2; $j++) {
                 Contacto::create([
                     'numero' => $numeroContacto++,
                     'entidade_id' => $fornecedor->id,
                     'primeiro_nome' => "Contacto$j",
                     'apelido' => "Fornecedor$i",
-                    'funcao' => 'Responsável',
+                    'funcao_id' => $responsavelFuncao->id,
                     'telefone' => '223334455',
                     'telemovel' => '913456789',
                     'email' => "contacto$j.fornecedor$i@exemplo.com",

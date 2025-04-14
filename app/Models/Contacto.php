@@ -16,7 +16,7 @@ class Contacto extends Model
         'entidade_id',
         'primeiro_nome',
         'apelido',
-        'funcao',
+        'funcao_id',
         'telefone',
         'telemovel',
         'email',
@@ -29,6 +29,11 @@ class Contacto extends Model
     public function entidade()
     {
         return $this->belongsTo(Entidade::class);
+    }
+
+    public function funcao()
+    {
+        return $this->belongsTo(Funcao::class);
     }
 
     // Encriptação dos campos sensíveis

@@ -14,6 +14,7 @@ const toast = useToast();
 const props = defineProps({
     contacto: Object,
     entidades: Array,
+    funcoes: Array,
 });
 
 const form = useForm({
@@ -21,7 +22,7 @@ const form = useForm({
     numero: props.contacto.numero,
     primeiro_nome: props.contacto.primeiro_nome,
     apelido: props.contacto.apelido,
-    funcao: props.contacto.funcao,
+    funcao_id: props.contacto.funcao_id,
     telefone: props.contacto.telefone,
     telemovel: props.contacto.telemovel,
     email: props.contacto.email,
@@ -91,13 +92,24 @@ const submit = () => {
                     </FormItem>
                 </FormField>
 
-                <FormField name="funcao">
+                <FormField name="funcao_id">
                     <FormItem>
                         <FormLabel>Função</FormLabel>
                         <FormControl>
-                            <Input v-model="form.funcao" id="funcao" />
+                            <Select v-model="form.funcao_id">
+                                <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecionar função" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent class="max-h-[250px] overflow-y-auto">
+                                    <SelectItem v-for="funcao in funcoes" :key="funcao.id" :value="funcao.id">
+                                        {{ funcao.nome }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
                         </FormControl>
-                        <FormMessage>{{ form.errors.funcao }}</FormMessage>
+                        <FormMessage>{{ form.errors.funcao_id }}</FormMessage>
                     </FormItem>
                 </FormField>
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Contacto;
 use App\Models\Entidade;
+use App\Models\Funcao;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -12,7 +13,7 @@ class ContactoController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Contacto::query()->with('entidade');
+        $query = Contacto::query()->with(['entidade', 'funcao']);
 
         // Filtros dinâmicos
         if ($nome = $request->input('nome')) {
@@ -70,7 +71,7 @@ class ContactoController extends Controller
 
     public function show(Contacto $contacto)
     {
-        $contacto->load('entidade');
+        $contacto->load(['entidade', 'funcao']);
 
         activity()
             ->useLog('Contactos')
@@ -102,6 +103,7 @@ class ContactoController extends Controller
 
         return Inertia::render('Contactos/Create', [
             'entidades' => Entidade::all(),
+            'funcoes' => Funcao::all(),
             'proximoNumero' => $proximoNumero,
         ]);
     }
@@ -112,7 +114,7 @@ class ContactoController extends Controller
             'entidade_id' => ['required', 'exists:entidades,id'],
             'primeiro_nome' => ['required', 'string', 'max:255'],
             'apelido' => ['required', 'string', 'max:255'],
-            'funcao' => ['required', 'string', 'max:255'],
+            'funcao_id' => ['required', 'exists:funcoes,id'],
             'telefone' => ['required', 'string', 'max:50'],
             'telemovel' => ['required', 'string', 'max:50'],
             'email' => ['required', 'email', 'max:255', 'unique:contactos,email'],
@@ -155,6 +157,7 @@ class ContactoController extends Controller
         return Inertia::render('Contactos/Edit', [
             'contacto' => $contacto,
             'entidades' => Entidade::all(),
+            'funcoes' => Funcao::all(),
         ]);
     }
 
@@ -164,7 +167,7 @@ class ContactoController extends Controller
             'entidade_id' => ['required', 'exists:entidades,id'],
             'primeiro_nome' => ['required', 'string', 'max:255'],
             'apelido' => ['required', 'string', 'max:255'],
-            'funcao' => ['required', 'string', 'max:255'],
+            'funcao_id' => ['required', 'exists:funcoes,id'],
             'telefone' => ['required', 'string', 'max:50'],
             'telemovel' => ['required', 'string', 'max:50'],
             'email' => [

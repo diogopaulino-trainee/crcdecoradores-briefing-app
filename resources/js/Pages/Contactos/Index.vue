@@ -105,13 +105,13 @@ const columns = [
         cell: ({ row }) => h('span', row?.apelido || '—'),
     },
     {
-        accessorKey: 'funcao',
+        accessorKey: 'funcao.nome',
         header: () =>
             h('div', { class: 'flex items-center gap-1 cursor-pointer', onClick: () => sortBy('funcao') }, [
                 'Função',
                 currentSort.value === 'funcao' ? h(currentDirection.value === 'asc' ? ArrowUp : ArrowDown, { class: 'w-4 h-4' }) : null,
             ]),
-        cell: ({ row }) => h('span', row?.funcao || '—'),
+        cell: ({ row }) => h('span', row?.funcao?.nome || '—'),
     },
     {
         header: () =>
