@@ -72,7 +72,11 @@ const submit = () => {
                         <Select v-model="form.entidade_id">
                             <FormControl>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Selecionar entidade" />
+                                    <SelectValue
+                                        :placeholder="
+                                            form.entidade_id ? entidades.find((e) => e.id === form.entidade_id)?.nome : 'Selecionar entidade'
+                                        "
+                                    />
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
